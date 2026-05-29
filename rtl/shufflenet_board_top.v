@@ -32,7 +32,12 @@ module shufflenet_board_top #(
     parameter integer AXI_DW = 32
 ) (
     // ---- PS-provided clock and reset (connected by block design) ----
+    // Vivado IP Integrator interface attributes: clock at 100 MHz, drives S_AXI
+    (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axi_aclk CLK" *)
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 100000000, ASSOCIATED_BUSIF S_AXI, ASSOCIATED_RESET s_axi_aresetn" *)
     input  wire                  s_axi_aclk,    // 100 MHz from PS pl_clk0
+    (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 s_axi_aresetn RST" *)
+    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_LOW" *)
     input  wire                  s_axi_aresetn, // active-low, from PS pl_resetn0
 
     // ---- AXI4-Lite slave (from PS M_AXI_HPM0_FPD via AXI interconnect) ----

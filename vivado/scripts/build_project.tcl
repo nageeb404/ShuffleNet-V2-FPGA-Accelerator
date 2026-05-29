@@ -22,7 +22,7 @@ set proj_root [file normalize [file join [file dirname $script_path] .. ..]]
 set proj_dir [file join $proj_root vivado prj_zu19eg]
 set proj_name "shufflenet_zu19eg"
 set part  "xczu19eg-ffvc1760-1-i"
-set board "iw-g35m-19eg-4e004g-e008g-lia:part0:1.0"
+set board "iwavesystems.com:iw-g35m-19eg-4e004g-e008g-lia:part0:1.0"
 
 puts "\[INFO\] Project root : $proj_root"
 puts "\[INFO\] Project dir : $proj_dir"
@@ -113,26 +113,27 @@ current_bd_design "system"
 
 # ---- Zynq MPSoC PS ----
 set ps [create_bd_cell -type ip \
- -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 zynq_ultra_ps_e_0]
+ -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0]
 
-# Configure PS:
-# - Enable AXI master HPM0 FPD (32-bit data, used for pixel + CSR writes)
-# - Enable PL clock 0 at 100 MHz
-# - Enable PL reset 0
-set_property -dict [list \
- CONFIG.PSU__USE__M_AXI_GP0 {1} \
- CONFIG.PSU__MAXIGP0__DATA_WIDTH {32} \
- CONFIG.PSU__FPGA_PL0_ENABLE {1} \
- CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100} \
-] $ps
-
-# Apply BD automation with iWave board preset.
-# This configures the PS DDR4, MIO (eMMC/UART/I2C), and fixed-IO connections
-# automatically from the iWave board definition loaded above.
+# Step 1: Apply iWave board preset first.
+# This sets DDR4 timing, MIO (UART/eMMC/Ethernet/I2C), fixed-IO, and
+# connects DDR/FIXED_IO ports automatically. Must come BEFORE our property
+# overrides because apply_bd_automation resets properties to preset defaults.
 apply_bd_automation \
  -rule xilinx.com:bd_rule:zynq_ultra_ps_e \
  -config {apply_board_preset 1} \
  [get_bd_cells zynq_ultra_ps_e_0]
+
+# Step 2: Override / add our specific settings on top of the board preset.
+# Enable AXI master HPM0 FPD for pixel writes and CSR access from PS,
+# confirm PL clock 0 at 100 MHz.
+set_property -dict [list \
+ CONFIG.PSU__USE__M_AXI_GP0 {1} \
+ CONFIG.PSU__MAXIGP0__DATA_WIDTH {32} \
+ CONFIG.PSU__USE__M_AXI_GP1 {0} \
+ CONFIG.PSU__FPGA_PL0_ENABLE {1} \
+ CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100} \
+] $ps
 
 # ---- AXI SmartConnect (PS master -> our slave) ----
 set sc [create_bd_cell -type ip \
@@ -147,13 +148,13 @@ set sn [create_bd_cell -type module \
  -reference shufflenet_board_top shufflenet_board_top_0]
 
 # ---- Connections ----
-# Clock: PS pl_clk0 -> smartconnect ACLK, shufflenet ACLK
+# Clock: PS pl_clk0 -> smartconnect, shufflenet, and PS HPM0 FPD clock input.
+# maxihpm0_fpd_aclk must be driven (required by PS IP for the AXI master port).
 connect_bd_net \
  [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] \
- [get_bd_pins smartconnect_0/aclk]
-connect_bd_net \
- [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] \
- [get_bd_pins shufflenet_board_top_0/s_axi_aclk]
+ [get_bd_pins smartconnect_0/aclk] \
+ [get_bd_pins shufflenet_board_top_0/s_axi_aclk] \
+ [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk]
 
 # Reset: PS pl_resetn0 -> smartconnect, shufflenet
 connect_bd_net \
@@ -172,13 +173,14 @@ connect_bd_intf_net \
  [get_bd_intf_pins shufflenet_board_top_0/S_AXI]
 
 # ---- Address assignment ----
-# Base address 0xA000_0000, range 32 MB (covers pixel region + CSR)
-assign_bd_address \
- [get_bd_addr_segs shufflenet_board_top_0/S_AXI/reg0]
-set_property offset 0xA0000000 \
- [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_shufflenet_board_top_0_reg0}]
-set_property range 32M \
- [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_shufflenet_board_top_0_reg0}]
+# Use create_bd_addr_seg directly: auto-assign tries 4G which exceeds the
+# 256M aperture at 0xA0000000 on M_AXI_HPM0_FPD. 32M fits fine.
+create_bd_addr_seg \
+ -range 32M -offset 0xA0000000 \
+ [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] \
+ [get_bd_addr_segs shufflenet_board_top_0/S_AXI/reg0] \
+ SEG_shufflenet_board_top_0_reg0
+puts "\[INFO\] Address: shufflenet at 0xA0000000, range 32M"
 
 # ---- Validate and generate wrapper ----
 puts "\[INFO\] Validating block design..."
