@@ -52,12 +52,12 @@ module shufflenet_board_top #(
     output wire [AXI_DW-1:0]    s_axi_rdata,
     output wire [1:0]            s_axi_rresp,
     output wire                  s_axi_rvalid,
-    input  wire                  s_axi_rready,
-
-    // ---- Status LEDs ----
-    output wire                  busy_led,   // high while accelerator active
-    output wire                  done_led    // pulses when classification done
+    input  wire                  s_axi_rready
 );
+    // Status signals (busy_led / done_led) are readable via AXI CSR register.
+    // They are not exposed as PL I/O ports because the iWave ZU19EG SOM has no
+    // board-defined user LED pins — read RDATA[1]=busy, RDATA[2]=done from the
+    // CSR at AWADDR[21]=1 on the AXI slave instead.
 
     // =========================================================================
     // 1. MMCM: s_axi_aclk (100 MHz) -> clk (100 MHz, re-generated)
@@ -184,12 +184,6 @@ module shufflenet_board_top #(
         .class_idx          (class_idx_w),
         .classification_done(classification_done_w)
     );
-
-    // =========================================================================
-    // 6. Status LEDs
-    // =========================================================================
-    assign busy_led = busy_w;
-    assign done_led = classification_done_w;
 
 endmodule
 

@@ -52,14 +52,9 @@ set_clock_groups -asynchronous \
 
 # -----------------------------------------------------------------------------
 # 5. I/O constraints
-# busy_led and done_led connect to on-board LEDs.
-# Uncomment and fill in the correct package pin and voltage for the
-# iWave ZU19EG board after consulting the board schematic / UCF.
-# Example (fill in actual pin from board schematic):
-# set_property PACKAGE_PIN <PIN> [get_ports busy_led]
-# set_property IOSTANDARD LVCMOS18 [get_ports busy_led]
-# set_property PACKAGE_PIN <PIN> [get_ports done_led]
-# set_property IOSTANDARD LVCMOS18 [get_ports done_led]
+# busy_led and done_led are NOT exposed as PL ports on the iWave ZU19EG SOM
+# (the SOM board file defines no user LED pins). Status is readable via the
+# AXI CSR register: RDATA[1]=busy, RDATA[2]=classification_done, RDATA[12:3]=class_idx.
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------

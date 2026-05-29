@@ -21,11 +21,13 @@ set script_path [file normalize [info script]]
 set proj_root [file normalize [file join [file dirname $script_path] .. ..]]
 set proj_dir [file join $proj_root vivado prj_zu19eg]
 set proj_name "shufflenet_zu19eg"
-set part "xczu19eg-ffvc1760-2-i"
+set part  "xczu19eg-ffvc1760-1-i"
+set board "iw-g35m-19eg-4e004g-e008g-lia:part0:1.0"
 
 puts "\[INFO\] Project root : $proj_root"
 puts "\[INFO\] Project dir : $proj_dir"
-puts "\[INFO\] Part : $part"
+puts "\[INFO\] Part        : $part"
+puts "\[INFO\] Board       : $board"
 
 # ---- Clean previous project ----
 catch {close_sim -quiet}
@@ -42,12 +44,19 @@ file mkdir $proj_dir
 # ---- Create project ----
 create_project $proj_name $proj_dir -part $part -force
 set_property target_language Verilog [current_project]
+# Set board so IP Integrator applies iWave DDR4/MIO/clock presets to the Zynq PS
+set_property board_part $board [current_project]
 
 # =========================================================================
 # Add RTL sources
 # =========================================================================
 proc add_rtl_dir {dir} {
- set vfiles [glob -nocomplain -directory $dir *.v]
+ # Exclude _stub.v files (OOC synthesis black-boxes, not for full build)
+ set all_vfiles [glob -nocomplain -directory $dir *.v]
+ set vfiles {}
+ foreach f $all_vfiles {
+  if {![string match "*_stub.v" $f]} { lappend vfiles $f }
+ }
  set vhfiles [glob -nocomplain -directory $dir *.vh]
  if {[llength $vfiles] > 0} { add_files -norecurse $vfiles }
  if {[llength $vhfiles] > 0} {
@@ -117,10 +126,12 @@ set_property -dict [list \
  CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100} \
 ] $ps
 
-# Apply BD automation (connects DDR, fixed IO, etc.)
+# Apply BD automation with iWave board preset.
+# This configures the PS DDR4, MIO (eMMC/UART/I2C), and fixed-IO connections
+# automatically from the iWave board definition loaded above.
 apply_bd_automation \
  -rule xilinx.com:bd_rule:zynq_ultra_ps_e \
- -config {apply_board_preset 0} \
+ -config {apply_board_preset 1} \
  [get_bd_cells zynq_ultra_ps_e_0]
 
 # ---- AXI SmartConnect (PS master -> our slave) ----
