@@ -1,0 +1,27 @@
+# Vivado generated files
+vivado/proj_impl/
+vivado/prj_zu19eg/
+vivado/work/
+vivado/reports/
+*.jou
+*.log
+.Xil/
+
+# Build outputs
+build/
+*.bit
+*.bin
+*.ltx
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

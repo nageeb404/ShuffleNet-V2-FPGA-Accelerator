@@ -1,0 +1,24 @@
+G3 Weight Extraction Verify  (extract_weights_g2_g3.py)
+=================================================================
+
+QUANTIZATION FORMATS
+  G3 PW weights : 9-bit  frac=8  scale=256  range=[-1.0000, 0.9961]
+  G3 PW biases  : 15-bit  frac=8  scale=256  range=[-64.0000, 63.9961]
+  FC weights    : 9-bit   frac=8  scale=256  range=[-1.0000, 0.9961]
+  FC biases     : 11-bit  frac=8  scale=256  range=[-4.0000, 3.9961]
+
+SATURATION COUNTS
+  G3 PW weights : 0 / 475136
+  G3 PW biases  : 0 / 1024
+  FC weights    : 783861 / 1024000
+  FC biases     : 0 / 1000
+
+CONV5 DIMENSIONS
+  Weight : (1024, 464, 1, 1)  (out=1024, in=464)
+  Filter groups: 64 x 16 = 1024 output filters
+  Acc steps    : 16 x 29 = 464 input channels
+
+SAMPLE WEIGHTS (conv5 fg=0 step=0 filt=0)
+  conv5[0, 0..4, 0, 0] (float): +0.0064  -0.1276  -0.0428  +0.0125  -0.0532
+  FC class 0 weights [0..7] (float): -4.3285  +3.7496  +4.4626  +0.2718  +1.7148  -1.5829  +2.6863  +6.2745
+  FC class 0 bias (float): -1.4248 -> Q=693

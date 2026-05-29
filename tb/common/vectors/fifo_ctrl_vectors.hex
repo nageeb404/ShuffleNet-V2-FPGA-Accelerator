@@ -1,0 +1,27 @@
+# fifo_ctrl vectors: img_w=4 img_h=4 pad=1 stride=2
+# total_cycles=24 done_cycle=23
+# format: shift_and_load padding_sel rd_addr(4-hex-digits)
+1 1 0000
+1 0 0001
+1 0 0002
+1 0 0003
+1 0 0004
+1 1 0004
+1 1 0004
+1 0 0005
+1 0 0006
+1 0 0007
+1 0 0008
+1 1 0008
+1 1 0008
+1 0 0009
+1 0 000A
+1 0 000B
+1 0 000C
+1 1 000C
+1 1 000C
+1 0 000D
+1 0 000E
+1 0 000F
+1 0 0010
+1 1 0010

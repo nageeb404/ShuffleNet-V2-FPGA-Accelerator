@@ -1,0 +1,27 @@
+// bias_rom_3x3 testbench check vectors
+// Format: filter  expected_bias_hex
+// 24 entries (one per filter)
+0 00D1
+1 003E
+2 00DC
+3 004C
+4 002B
+5 0186
+6 7E80
+7 0195
+8 0094
+9 0060
+10 0026
+11 0078
+12 0050
+13 007B
+14 7FB0
+15 0023
+16 009F
+17 00EC
+18 013E
+19 0259
+20 0073
+21 00E7
+22 7EA2
+23 005A

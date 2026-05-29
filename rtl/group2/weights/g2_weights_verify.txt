@@ -1,0 +1,48 @@
+G2 Weight Extraction Verify  (extract_weights_g2_g3.py)
+=================================================================
+
+QUANTIZATION FORMATS
+  DW  weights : 15-bit  frac=8  scale=256  range=[-64.0000, 63.9961]
+  DW  biases  : 15-bit  frac=8  scale=256  range=[-64.0000, 63.9961]
+  PW  weights : 11-bit  frac=9  scale=512  range=[-2.0000, 1.9980]
+  PW  biases  : 13-bit  frac=9  scale=512  range=[-8.0000, 7.9980]
+
+SATURATION COUNTS
+  DW weights : 4 / 8352
+  DW biases  : 0 / 928
+  PW weights : 0 / 222720
+  PW biases  : 0 / 928
+
+LOOP CHANNEL COUNTS
+  Loop    Stage  N_ACC  DW_ch  PW2_in  PW2_used
+--------------------------------------------------
+     0   stage2      2     58      58        24
+     1   stage2      5     58      58        58
+     2   stage2      5     58      58        58
+     3   stage2      5     58      58        58
+     4   stage3      5    116     116        60
+     5   stage3     10    116     116       116
+     6   stage3     10    116     116       116
+     7   stage3     10    116     116       116
+     8   stage3     10    116     116       116
+     9   stage3     10    116     116       116
+    10   stage3     10    116     116       116
+    11   stage3     10    116     116       116
+    12   stage4     10    232     232       120
+    13   stage4     20    232     232       232
+    14   stage4     20    232     232       232
+    15   stage4     20    232     232       232
+
+SAMPLE WEIGHTS (loop=0, filter=0)
+  DW filter 0 kernel (3x3, float):
+    -0.06810  +0.86154  -0.96397
+    -0.41403  +3.51408  -2.94247
+    -0.50224  +3.76533  -2.53090
+  DW filter 0 bias: -0.42033 -> Q=7F94
+  PW2 filter 0 bias: +0.20667 -> Q=006A
+
+SAMPLE WEIGHTS (loop=4, filter=0) [stage3 first block]
+  DW filter 0 kernel (3x3, float):
+    -0.02354  -0.08863  -0.05778
+    -0.08697  -0.13724  -0.10469
+    -0.05440  -0.09998  -0.08573
