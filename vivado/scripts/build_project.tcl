@@ -55,7 +55,7 @@ proc add_rtl_dir {dir} {
  set all_vfiles [glob -nocomplain -directory $dir *.v]
  set vfiles {}
  foreach f $all_vfiles {
-  if {![string match "*_stub.v" $f]} { lappend vfiles $f }
+  if {![string match "*_stub.v" $f] && ![string match "*_bb.v" $f]} { lappend vfiles $f }
  }
  set vhfiles [glob -nocomplain -directory $dir *.vh]
  if {[llength $vfiles] > 0} { add_files -norecurse $vfiles }
@@ -73,9 +73,14 @@ proc add_rtl_dir {dir} {
 
 add_rtl_dir [file join $proj_root rtl common]
 add_rtl_dir [file join $proj_root rtl memories]
-add_rtl_dir [file join $proj_root rtl group1]
-add_rtl_dir [file join $proj_root rtl group2]
-add_rtl_dir [file join $proj_root rtl group3]
+# group1/2/3: black-box stubs only. OOC synthesis needs a module definition to
+# avoid "module not found" errors; empty bodies with (* black_box *) tell
+# Vivado not to generate logic. The OOC run must use flatten_hierarchy=none so
+# these empty cells are not optimized away (see part3_synth_and_impl.tcl).
+# Real netlists are injected via read_checkpoint -cell at implementation time.
+add_files -norecurse [file join $proj_root rtl group1 group1_top_bb.v]
+add_files -norecurse [file join $proj_root rtl group2 group2_top_bb.v]
+add_files -norecurse [file join $proj_root rtl group3 group3_top_bb.v]
 add_rtl_dir [file join $proj_root rtl axi]
 
 # Top-level RTL files (accelerator_ctrl, accelerator_top, shufflenet_board_top)
@@ -146,6 +151,9 @@ set_property CONFIG.NUM_MI {1} $sc
 # All s_axi_* ports are auto-mapped to an AXI4-Lite slave interface.
 set sn [create_bd_cell -type module \
  -reference shufflenet_board_top shufflenet_board_top_0]
+# Synthesize our RTL globally (with synth_1) instead of as a separate OOC
+# sub-process. This avoids two concurrent synthesis processes competing for RAM.
+set_property SYNTH_CHECKPOINT_MODE None [get_bd_cells shufflenet_board_top_0]
 
 # ---- Connections ----
 # Clock: PS pl_clk0 -> smartconnect, shufflenet, and PS HPM0 FPD clock input.

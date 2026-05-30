@@ -19,7 +19,7 @@
 `include "shufflenet_pkg.vh"
 
 module g2_dw_weight_rom #(
-    parameter INIT_FILE = "rtl/group2/weights/g2_dw_weights.hex"
+    parameter INIT_FILE = "g2_dw_weights.hex"
 ) (
     // address = loop_id (0..15)
     input  wire [3:0]    addr,

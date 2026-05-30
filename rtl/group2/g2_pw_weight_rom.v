@@ -18,19 +18,20 @@
 `include "shufflenet_pkg.vh"
 
 module g2_pw_weight_rom #(
-    parameter INIT_FILE = "rtl/group2/weights/g2_pw_weights.hex"
+    parameter INIT_FILE = "g2_pw_weights.hex"
 ) (
+    input  wire          clk,
     // address = loop_id * 20 + step_id (0..319)
     input  wire [8:0]    addr,
     // data = all 58 filter weights for one step (7656 bits)
     // weight[f][c] at bits (f*12+c)*11 +: 11
-    output wire [7655:0] data_out
+    output reg  [7655:0] data_out
 );
 
     localparam integer DEPTH = 320;    // 16 loops * 20 max steps
     localparam integer DW    = 7656;   // G2_PW_PAR_FILT * G2_PW_PAR_CHAN * G2_PW_WW
 
-    (* rom_style = "distributed" *) reg [DW-1:0] rom [0:DEPTH-1];
+    (* rom_style = "block" *) reg [DW-1:0] rom [0:DEPTH-1];
 
     integer i;
     initial begin
@@ -39,7 +40,8 @@ module g2_pw_weight_rom #(
         $readmemh(INIT_FILE, rom);
     end
 
-    assign data_out = rom[addr];
+    always @(posedge clk)
+        data_out <= rom[addr];
 
 endmodule
 

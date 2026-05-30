@@ -16,7 +16,7 @@
 `include "shufflenet_pkg.vh"
 
 module g3_pw_bias_rom #(
-    parameter INIT_FILE = "rtl/group3/weights/g3_pw_biases.hex"
+    parameter INIT_FILE = "g3_pw_biases.hex"
 ) (
     // address = filter_group (0..63)
     input  wire [5:0]    addr,

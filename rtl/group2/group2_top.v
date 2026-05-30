@@ -350,6 +350,7 @@ module group2_top (
     wire [8:0] pw_w_addr     = (pw_w_loops_9b << 4) + (pw_w_loops_9b << 2) + pw_w_step_9b;
 
     g2_pw_weight_rom u_pw_w_rom (
+        .clk     (clk),
         .addr    (pw_w_addr),
         .data_out(pw_weights_rom_out)
     );

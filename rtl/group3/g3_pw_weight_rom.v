@@ -19,7 +19,7 @@
 `include "shufflenet_pkg.vh"
 
 module g3_pw_weight_rom #(
-    parameter INIT_FILE = "rtl/group3/weights/g3_pw_weights.hex"
+    parameter INIT_FILE = "g3_pw_weights.hex"
 ) (
     input  wire        clk,
     // address = filter_group * 16 + step_id (0..1023)

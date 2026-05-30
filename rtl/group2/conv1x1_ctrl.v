@@ -90,7 +90,10 @@ module conv1x1_ctrl #(
     // Combinational outputs ( -- counter-based addressing)
     assign we      = (state == S_RUNNING) & (step_cnt == STEP_MAX);
     assign wr_addr = pix_cnt;                                // valid when we=1
-    assign step_out = step_cnt[4:0];                         // 0..N_ACC-1
+    // Output next step address so BRAM data arrives 1 cycle later aligned with MAC
+    assign step_out = (state == S_RUNNING && step_cnt != STEP_MAX)
+                      ? step_cnt[4:0] + 5'd1
+                      : 5'd0;
 
     // -------------------------------------------------------------------------
     // Sequential FSM + counters
