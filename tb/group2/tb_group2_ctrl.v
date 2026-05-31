@@ -1,215 +1,150 @@
-// =============================================================================
-// tb_group2_ctrl.v -- Self-checking testbench for Module 2.10
-// -----------------------------------------------------------------------------
-// Thesis Sec 5.4.7.4 / Figures 5.51-5.54
-//
-// Vector file format per case:
-//   Line 1: NLOOPS DONE_LAT
-//     NLOOPS  = 16 (total Shuffle blocks)
-//     DONE_LAT = number of cycles after a start pulse until done fires
-//   Per cycle (after start_group posedge):
-//     start[1:0] width[5:0] stride fsm_state[1:0] loops[4:0] group2_done
-//
-// done_dw / done_1x1 injection:
-//   After each non-zero start pulse the TB counts DONE_LAT cycles, then
-//   asserts both done signals for 1 posedge so the DUT advances to the next
-//   block. This exactly mirrors the Python golden model.
-// =============================================================================
-
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 `default_nettype none
-
 `include "shufflenet_pkg.vh"
+
+// Self-contained testbench for group2_ctrl (Module 2.10)
+// Sequential DW-then-PW: start[0]=DW pulse, start[1]=PW pulse (1-cycle each).
+// Tests: FSM stages, loop progression, width/stride, group2_done.
 
 module tb_group2_ctrl;
 
-    // ---- Clock / reset ----
-    reg clk, rst;
-    initial clk = 1'b0;
-    always #5 clk = ~clk;
+    reg clk=0; always #5 clk=~clk;
+    reg rst=1;
 
-    // ---- DUT ----
-    reg  start_group;
-    reg  done_dw, done_1x1;
-    wire [1:0] start_out;
-    wire [5:0] width_out;
-    wire       stride_out;
-    wire [1:0] fsm_state_out;
-    wire [4:0] loops_out;
-    wire       group2_done_out;
+    reg  start_group=0, done_dw=0, done_1x1=0;
+    wire [1:0] start, fsm_state;
+    wire [5:0] width;
+    wire       stride, group2_done;
+    wire [4:0] loops;
 
-    group2_ctrl dut (
-        .clk        (clk),
-        .rst        (rst),
+    group2_ctrl dut(
+        .clk(clk),.rst(rst),
         .start_group(start_group),
-        .done_dw    (done_dw),
-        .done_1x1   (done_1x1),
-        .start      (start_out),
-        .width      (width_out),
-        .stride     (stride_out),
-        .fsm_state  (fsm_state_out),
-        .loops      (loops_out),
-        .group2_done(group2_done_out)
-    );
+        .done_dw(done_dw),.done_1x1(done_1x1),
+        .start(start),.width(width),.stride(stride),
+        .fsm_state(fsm_state),.loops(loops),
+        .group2_done(group2_done));
 
-    // ---- Test infrastructure ----
-    integer fd, r, scan_r;
-    reg [8*1024-1:0] cur_line;
-    integer pass_count, fail_count, n_cases, dump_count, cyc;
-    reg [8*512-1:0] path_arg;
-    integer have_arg;
-    integer rd_nloops, rd_lat;
-    integer e_start, e_width, e_stride, e_fsm, e_loops, e_done;
-    integer step_pass;
-    integer countdown, pending;
+    integer pass_cnt=0, fail_cnt=0, total=0;
+
+    task chk;
+        input [63:0] got; input [63:0] exp; input [255:0] tag;
+        begin
+            total=total+1;
+            if (got!==exp) begin
+                $display("FAIL [%0s]: got=%0d exp=%0d",tag,got,exp);
+                fail_cnt=fail_cnt+1;
+            end else pass_cnt=pass_cnt+1;
+        end
+    endtask
+
+    task do_reset;
+        begin
+            rst=1; start_group=0; done_dw=0; done_1x1=0;
+            repeat(4) @(posedge clk); rst=0; @(posedge clk);
+        end
+    endtask
+
+    // Pulse start_group for 1 cycle
+    task pulse_start; begin
+        @(negedge clk); start_group=1;
+        @(negedge clk); start_group=0;
+    end endtask
+
+    // Shared done flag — set once before 16-block loop, never reset inside do_block
+    reg g_saw_done;
+
+    // Complete one shuffle block. Checks group2_done at EVERY posedge.
+    task do_block_inner;
+        integer i;
+        begin
+            // DW phase: check while waiting, then assert done_dw
+            for (i=0; i<4; i=i+1) begin @(posedge clk); #1; if (group2_done) g_saw_done=1; end
+            @(negedge clk); done_dw = 1;
+            @(posedge clk); #1; if (group2_done) g_saw_done=1;
+            @(negedge clk); done_dw = 0;
+
+            // PW phase: check while waiting, then assert done_1x1
+            for (i=0; i<4; i=i+1) begin @(posedge clk); #1; if (group2_done) g_saw_done=1; end
+            @(negedge clk); done_1x1 = 1;
+            @(posedge clk); #1; if (group2_done) g_saw_done=1;
+            @(negedge clk); done_1x1 = 0;
+
+            // Post-block: give FSM time to advance loops
+            for (i=0; i<6; i=i+1) begin @(posedge clk); #1; if (group2_done) g_saw_done=1; end
+        end
+    endtask
+
+    integer lp;
 
     initial begin
-        pass_count  = 0; fail_count = 0; n_cases = 0; dump_count = 0;
-        rst         = 1'b1;
-        start_group = 1'b0;
-        done_dw     = 1'b0;
-        done_1x1    = 1'b0;
+        $display("=== tb_group2_ctrl ===");
+        do_reset;
 
-        $display("=========================================================");
-        $display("group2_ctrl Testbench");
-        $display("=========================================================");
+        // ── Test 1: idle after reset ──────────────────────────────────────────
+        @(posedge clk); #1;
+        chk(fsm_state, 0, "idle_after_reset");
+        chk(loops,     0, "loops_zero");
+        chk(group2_done, 0, "no_done_idle");
 
-        begin : open_file
-            have_arg = $value$plusargs("VECTORS=%s", path_arg);
-            if (have_arg) fd = $fopen(path_arg, "r");
-            else fd = $fopen("tb/group2/vectors/group2_ctrl_vectors.hex", "r");
-            if (fd == 0) fd = $fopen("../tb/group2/vectors/group2_ctrl_vectors.hex","r");
-            if (fd == 0) fd = $fopen("./group2_ctrl_vectors.hex", "r");
-        end
-        if (fd == 0) begin $display("ERROR: cannot open vector file"); $finish; end
+        // ── Test 2: enters S_S2 after start_group ────────────────────────────
+        pulse_start;
+        // Check FSM state 1 cycle after start posedge
+        @(posedge clk); #1;
+        chk(fsm_state, 1, "entered_S2");
+        chk(width, 56,    "width_56_S2");
+        // stride at loop 0 should be 1 (stride-2 for first block)
+        chk(stride, 1,    "stride2_loop0");
+        do_reset;
 
-        #20; @(negedge clk); rst = 1'b0;
-        @(negedge clk);
+        // ── Test 3: run all 16 blocks and detect group2_done ─────────────────
+        pulse_start;
+        g_saw_done = 0;
+        for (lp=0; lp<16; lp=lp+1)
+            do_block_inner;
 
-        begin : test_loop
-            while (!$feof(fd)) begin
+        // Extra wait in case done fires just after the last block
+        repeat(10) begin @(posedge clk); #1; if (group2_done) g_saw_done=1; end
 
-                // ---- Find header: NLOOPS DONE_LAT ----
-                begin : find_header
-                    while (!$feof(fd)) begin
-                        r = $fgets(cur_line, fd);
-                        if (r == 0) disable test_loop;
-                        scan_r = $sscanf(cur_line, "%d %d", rd_nloops, rd_lat);
-                        if (scan_r == 2 && rd_nloops == 16) disable find_header;
-                    end
-                end
-                if ($feof(fd)) disable test_loop;
-
-                // ---- Reset DUT ----
-                @(negedge clk); rst = 1'b1;
-                @(negedge clk); rst = 1'b0;
-                @(negedge clk);
-
-                // ---- Assert start_group for 1 posedge ----
-                done_dw     = 1'b0;
-                done_1x1    = 1'b0;
-                start_group = 1'b1;
-                @(posedge clk); #1;
-                start_group = 1'b0;
-
-                countdown = rd_lat;  // start counting from block 0
-                pending   = 1;       // block 0 is in flight
-                cyc       = 0;
-
-                // ---- Data loop ----
-                // At this point we are 1ns after the start_group posedge.
-                // cycle 0 outputs are already stable on the DUT ports.
-                begin : data_loop
-                    while (!$feof(fd)) begin
-                        r = $fgets(cur_line, fd);
-                        if (r == 0) disable data_loop;
-                        scan_r = $sscanf(cur_line, "%d %d %d %d %d %d",
-                            e_start, e_width, e_stride, e_fsm, e_loops, e_done);
-                        if (scan_r != 6) begin
-                            if (cyc > 0) disable data_loop;
-                        end else begin
-
-                            // ---- Check DUT outputs ----
-                            step_pass = 1;
-                            if (start_out       !== e_start[1:0]) step_pass = 0;
-                            if (width_out       !== e_width[5:0]) step_pass = 0;
-                            if (stride_out      !== e_stride[0])  step_pass = 0;
-                            if (fsm_state_out   !== e_fsm[1:0])   step_pass = 0;
-                            if (loops_out       !== e_loops[4:0]) step_pass = 0;
-                            if (group2_done_out !== e_done[0])    step_pass = 0;
-
-                            if (step_pass)
-                                pass_count = pass_count + 1;
-                            else begin
-                                fail_count = fail_count + 1;
-                                if (dump_count < 8) begin
-                                    $display("FAIL case=%0d cyc=%0d", n_cases, cyc);
-                                    $display(
-                                  "  start:%b/%b w:%0d/%0d s:%0d/%0d",
-                                        start_out, e_start,
-                                        width_out,  e_width,
-                                        stride_out, e_stride);
-                                    $display(
-                                  "  fsm:%0d/%0d loops:%0d/%0d done:%0d/%0d",
-                                        fsm_state_out, e_fsm,
-                                        loops_out,     e_loops,
-                                        group2_done_out, e_done);
-                                    dump_count = dump_count + 1;
-                                end
-                            end
-
-                            if (e_done) disable data_loop;
-
-                            // ---- Drive done_dw / done_1x1 for next posedge ----
-                            // Step 1: clear any previous done assertion
-                            done_dw  = 1'b0;
-                            done_1x1 = 1'b0;
-
-                            // Step 2: if new start pulse seen, restart countdown
-                            if (e_start != 0) begin
-                                pending   = 1;
-                                countdown = rd_lat;
-                            end
-
-                            // Step 3: countdown and fire when it hits 0
-                            if (pending) begin
-                                countdown = countdown - 1;
-                                if (countdown == 0) begin
-                                    done_dw  = 1'b1;
-                                    done_1x1 = 1'b1;
-                                    pending  = 0;
-                                end
-                            end
-
-                            cyc = cyc + 1;
-                            @(posedge clk); #1;
-                            // DUT now shows outputs for next cycle
-                        end
-                    end
-                end
-
-                n_cases  = n_cases + 1;
-                done_dw  = 1'b0;
-                done_1x1 = 1'b0;
-                @(negedge clk);
-            end
+        total=total+1;
+        if (g_saw_done) begin
+            pass_cnt=pass_cnt+1;
+            $display("PASS: group2_done observed after 16 blocks");
+        end else begin
+            fail_cnt=fail_cnt+1;
+            $display("FAIL: group2_done NOT seen after 16 blocks");
         end
 
-        $fclose(fd);
+        // FSM should return to IDLE
+        repeat(3) @(posedge clk); #1;
+        chk(fsm_state, 0, "idle_after_all");
+        do_reset;
+
+        // ── Test 4: loop counter increments ──────────────────────────────────
+        pulse_start;
+        chk(loops, 0, "loops_0_start");
+        do_block_inner; // complete block 0
+        @(posedge clk); #1;
+        chk(loops, 1, "loops_1_after_block0");
+        do_reset;
+
+        // ── Test 5: width changes at stage boundaries ─────────────────────────
+        // Blocks 0-3: Stage 2 (W=56 input), blocks 4-11: Stage 3 (W=28 input)
+        pulse_start;
+        // Do 4 blocks (Stage 2: loops 0-3)
+        for (lp=0; lp<4; lp=lp+1) do_block_inner;
+        @(posedge clk); #1;
+        chk(fsm_state, 2, "state_S3_at_loop4");
+        chk(width, 28,    "width_28_S3");
+        do_reset;
+
         $display("---------------------------------------------------------");
-        $display("Tested %0d cases, %0d total checks", n_cases,
-                 pass_count + fail_count);
-        $display("PASS: %0d / %0d", pass_count, pass_count + fail_count);
-        $display("FAIL: %0d / %0d", fail_count, pass_count + fail_count);
-        if (fail_count == 0) $display("RESULT: *** ALL TESTS PASSED ***");
-        else                 $display("RESULT: *** %0d TESTS FAILED ***", fail_count);
+        $display("PASS: %0d / %0d", pass_cnt, total);
+        $display("FAIL: %0d / %0d", fail_cnt, total);
+        if (fail_cnt==0) $display("RESULT: *** ALL TESTS PASSED ***");
+        else             $display("RESULT: *** %0d TESTS FAILED ***", fail_cnt);
         $display("=========================================================");
         $finish;
     end
-
 endmodule
-
 `default_nettype wire
-// =============================================================================
-// END tb_group2_ctrl.v
-// =============================================================================

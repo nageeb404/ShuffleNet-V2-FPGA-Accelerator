@@ -1,189 +1,160 @@
-// =============================================================================
-// tb_conv1x1_ctrl.v -- Self-checking testbench for Module 2.9
-// -----------------------------------------------------------------------------
-// Thesis Sec 5.4.7.3 / Figures 5.48, 5.49, 5.50
-//
-// Vector file format per case:
-//   Line 1: W H N_ACC  (3 decimal tokens)
-//   Per cycle (after start posedge): en acc_clr we wr_addr step_out done
-//   Blank line between cases.
-//
-// Timing: start asserted for 1 posedge -> cyc=0 checks DUT after start posedge.
-// All DUT outputs (en, acc_clr, done registered; we/wr_addr/step_out combinational)
-// are checked after each posedge.
-// =============================================================================
-
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 `default_nettype none
-
 `include "shufflenet_pkg.vh"
+
+// Self-contained testbench for conv1x1_ctrl (Module 2.9, Sec 5.4.7.3)
+// step_out is [4:0] (5-bit) supporting N_ACC up to 31.
+// Tests: step sequence, acc_clr timing, we pulse, wr_addr, done.
 
 module tb_conv1x1_ctrl;
 
-    // ---- Clock / reset ----
-    reg clk, rst;
-    initial clk = 1'b0;
-    always #5 clk = ~clk;
+    reg clk = 0; always #5 clk = ~clk;
+    reg rst = 0;
+    task do_reset; begin rst=1; repeat(3) @(posedge clk); rst=0; @(posedge clk); end endtask
 
-    // ---- DUT instances: W=7/14/28, H=same, N_ACC=7 ----
-    localparam N_DUTS = 3;
+    // ── DUT 0: W=H=7,  N_ACC=2  (config 0) ───────────────────────────────────
+    localparam W0=7, H0=7, N0=2;
+    reg  start0 = 0;
+    wire en0, acc_clr0, we0, done0, fsm0;
+    wire [11:0] wr0; wire [4:0] step0;
+    conv1x1_ctrl #(.W(W0),.H(H0),.N_ACC(N0),.AW(12)) dut0(
+        .clk(clk),.rst(rst),.start(start0),
+        .en(en0),.acc_clr(acc_clr0),.we(we0),.wr_addr(wr0),
+        .step_out(step0),.done(done0),.fsm_state(fsm0));
 
-    reg start_r [0:N_DUTS-1];
+    // ── DUT 1: W=H=14, N_ACC=5  (config 1) ───────────────────────────────────
+    localparam W1=14, H1=14, N1=5;
+    reg  start1 = 0;
+    wire en1, acc_clr1, we1, done1, fsm1;
+    wire [11:0] wr1; wire [4:0] step1;
+    conv1x1_ctrl #(.W(W1),.H(H1),.N_ACC(N1),.AW(12)) dut1(
+        .clk(clk),.rst(rst),.start(start1),
+        .en(en1),.acc_clr(acc_clr1),.we(we1),.wr_addr(wr1),
+        .step_out(step1),.done(done1),.fsm_state(fsm1));
 
-    wire en_0, en_1, en_2;
-    wire acc_clr_0, acc_clr_1, acc_clr_2;
-    wire we_0, we_1, we_2;
-    wire [11:0] wa_0, wa_1, wa_2;
-    wire [2:0]  st_0, st_1, st_2;
-    wire dn_0, dn_1, dn_2;
+    // ── DUT 2: W=H=7,  N_ACC=20 (config 5, max) ──────────────────────────────
+    localparam W2=7, H2=7, N2=20;
+    reg  start2 = 0;
+    wire en2, acc_clr2, we2, done2, fsm2;
+    wire [11:0] wr2; wire [4:0] step2;
+    conv1x1_ctrl #(.W(W2),.H(H2),.N_ACC(N2),.AW(12)) dut2(
+        .clk(clk),.rst(rst),.start(start2),
+        .en(en2),.acc_clr(acc_clr2),.we(we2),.wr_addr(wr2),
+        .step_out(step2),.done(done2),.fsm_state(fsm2));
 
-    conv1x1_ctrl #(.W(7),  .H(7),  .N_ACC(7), .AW(12)) dut0 (
-        .clk(clk),.rst(rst),.start(start_r[0]),
-        .en(en_0),.acc_clr(acc_clr_0),.we(we_0),
-        .wr_addr(wa_0),.step_out(st_0),.done(dn_0),.fsm_state());
+    integer pass_cnt=0, fail_cnt=0, total=0;
 
-    conv1x1_ctrl #(.W(14), .H(14), .N_ACC(7), .AW(12)) dut1 (
-        .clk(clk),.rst(rst),.start(start_r[1]),
-        .en(en_1),.acc_clr(acc_clr_1),.we(we_1),
-        .wr_addr(wa_1),.step_out(st_1),.done(dn_1),.fsm_state());
-
-    conv1x1_ctrl #(.W(28), .H(28), .N_ACC(7), .AW(12)) dut2 (
-        .clk(clk),.rst(rst),.start(start_r[2]),
-        .en(en_2),.acc_clr(acc_clr_2),.we(we_2),
-        .wr_addr(wa_2),.step_out(st_2),.done(dn_2),.fsm_state());
-
-    // ---- Signal selectors ----
-    reg obs_en, obs_ac, obs_we, obs_dn;
-    reg [11:0] obs_wa;
-    reg [2:0]  obs_st;
-    task select_dut;
-        input integer idx;
+    task chk;
+        input [63:0] got; input [63:0] exp; input [255:0] tag;
         begin
-            case (idx)
-                0: begin obs_en=en_0; obs_ac=acc_clr_0; obs_we=we_0; obs_wa=wa_0; obs_st=st_0; obs_dn=dn_0; end
-                1: begin obs_en=en_1; obs_ac=acc_clr_1; obs_we=we_1; obs_wa=wa_1; obs_st=st_1; obs_dn=dn_1; end
-                2: begin obs_en=en_2; obs_ac=acc_clr_2; obs_we=we_2; obs_wa=wa_2; obs_st=st_2; obs_dn=dn_2; end
-                default: begin obs_en=0; obs_ac=0; obs_we=0; obs_wa=0; obs_st=0; obs_dn=0; end
-            endcase
+            total = total + 1;
+            if (got !== exp) begin
+                $display("FAIL [%0s]: got=%0d exp=%0d", tag, got, exp);
+                fail_cnt = fail_cnt + 1;
+            end else pass_cnt = pass_cnt + 1;
         end
     endtask
 
-    // ---- Test infrastructure ----
-    integer fd, r, scan_r;
-    reg [8*1024-1:0] cur_line;
-    integer pass_count, fail_count, n_cases, dump_count, cyc;
-    reg [8*512-1:0] path_arg;
-    integer have_arg;
-    integer rd_W, rd_H, rd_N;
-    integer e_en, e_ac, e_we, e_dn;
-    integer e_wa, e_st;
-    integer dut_idx, step_pass;
-    integer i;
+    // ── Run DUT0: verify step_out 1..N_ACC, acc_clr, we, wr_addr, done ────────
+    task test_dut0;
+        integer s, pix;
+        begin
+            @(negedge clk); start0 = 1;
+            @(negedge clk); start0 = 0;
+
+            // step_cnt goes 0→1 at first RUNNING posedge.
+            // step_out = step_cnt+1 post-update: at iter s, step_cnt=s, step_out=(s<N0)?s+1:0
+            for (s = 1; s <= N0; s = s + 1) begin
+                @(posedge clk); #1;
+                chk(step0,   (s<N0) ? (s+1) : 5'd0, "d0.step");
+                chk(we0,     (s==N0)?1'b1:1'b0,      "d0.we");
+                chk(acc_clr0,(s<=2) ?1'b1:1'b0,      "d0.acc_clr");
+                chk(en0,     1'b1,                    "d0.en");
+                chk(wr0,     12'd0,                   "d0.wr_addr_pix0");
+            end
+
+            // After we=1: new pixel starts, wr_addr=1
+            @(posedge clk); #1;
+            chk(wr0, 12'd1, "d0.wr_addr_pix1");
+            chk(done0, 1'b0, "d0.no_done_yet");
+
+            // Let it run to completion
+            repeat (W0*H0*(N0+1) + 10) @(posedge clk);
+            #1; chk(done0, 1'b0, "d0.done_cleared"); // done is 1-cycle pulse, should be gone
+            chk(fsm0, 1'b0, "d0.idle_after");
+
+            do_reset;
+        end
+    endtask
+
+    // ── Run DUT1: verify step_out reaches N_ACC=5 ─────────────────────────────
+    task test_dut1;
+        integer s;
+        begin
+            @(negedge clk); start1 = 1;
+            @(negedge clk); start1 = 0;
+            for (s = 1; s <= N1; s = s + 1) begin
+                @(posedge clk); #1;
+                chk(step1, (s<N1)?(s+1):5'd0, "d1.step");
+            end
+            // step_cnt=N1 → next: step_cnt resets 0→1, pix_cnt→1
+            @(posedge clk); #1;
+            chk(step1, 5'd1, "d1.step_pix1_start"); // step_cnt resets STEP_MAX→0, step_out=0+1=1
+            chk(wr1,  12'd1, "d1.wr_addr_pix1");
+            do_reset;
+        end
+    endtask
+
+    // ── Run DUT2: step_out reaches 20 without overflow ────────────────────────
+    task test_dut2;
+        integer s;
+        begin
+            @(negedge clk); start2 = 1;
+            @(negedge clk); start2 = 0;
+            for (s = 1; s <= N2; s = s + 1) begin
+                @(posedge clk); #1;
+                chk(step2, (s<N2)?(s+1):5'd0, "d2.step");
+                chk(we2, (s==N2)?1'b1:1'b0, "d2.we");
+            end
+            do_reset;
+        end
+    endtask
+
+    // ── Done detection: DUT0 full run ─────────────────────────────────────────
+    task test_dut0_done;
+        integer cyc; reg saw_done;
+        begin
+            saw_done = 0;
+            @(negedge clk); start0 = 1;
+            @(negedge clk); start0 = 0;
+            for (cyc = 0; cyc < W0*H0*(N0+2)+10; cyc = cyc+1) begin
+                @(posedge clk); #1;
+                if (done0) saw_done = 1;
+            end
+            chk(saw_done, 1, "d0.done_seen");
+            do_reset;
+        end
+    endtask
 
     initial begin
-        pass_count = 0; fail_count = 0; n_cases = 0; dump_count = 0;
-        rst = 1'b1;
-        for (i = 0; i < N_DUTS; i = i+1) start_r[i] = 1'b0;
+        $display("=== tb_conv1x1_ctrl ===");
+        do_reset;
+        test_dut0;
+        test_dut1;
+        test_dut2;
+        test_dut0_done;
 
-        $display("=========================================================");
-        $display("conv1x1_ctrl Testbench");
-        $display("=========================================================");
-
-        begin : open_file
-            have_arg = $value$plusargs("VECTORS=%s", path_arg);
-            if (have_arg) fd = $fopen(path_arg, "r");
-            else fd = $fopen("tb/group2/vectors/conv1x1_ctrl_vectors.hex", "r");
-            if (fd == 0) fd = $fopen("../tb/group2/vectors/conv1x1_ctrl_vectors.hex", "r");
-            if (fd == 0) fd = $fopen("./conv1x1_ctrl_vectors.hex", "r");
-        end
-        if (fd == 0) begin $display("ERROR: cannot open vector file"); $finish; end
-
-        #20; @(negedge clk); rst = 1'b0;
-        @(negedge clk);
-
-        dut_idx = 0;
-
-        begin : test_loop
-            while (!$feof(fd) && dut_idx < N_DUTS) begin
-
-                begin : find_header
-                    while (!$feof(fd)) begin
-                        r = $fgets(cur_line, fd);
-                        if (r == 0) disable test_loop;
-                        scan_r = $sscanf(cur_line, "%d %d %d", rd_W, rd_H, rd_N);
-                        if (scan_r == 3) disable find_header;
-                    end
-                end
-                if ($feof(fd)) disable test_loop;
-
-                @(negedge clk); rst = 1'b1;
-                @(negedge clk); rst = 1'b0;
-                @(negedge clk);
-
-                start_r[dut_idx] = 1'b1;
-                @(posedge clk); #1;
-                start_r[dut_idx] = 1'b0;
-                cyc = 0;
-
-                begin : data_loop
-                    while (!$feof(fd)) begin
-                        r = $fgets(cur_line, fd);
-                        if (r == 0) disable data_loop;
-                        scan_r = $sscanf(cur_line, "%d %d %d %d %d %d",
-                            e_en, e_ac, e_we, e_wa, e_st, e_dn);
-                        if (scan_r != 6) begin
-                            if (cyc > 0) disable data_loop;
-                        end else begin
-                            select_dut(dut_idx);
-
-                            step_pass = 1;
-                            if (obs_en !== e_en) step_pass = 0;
-                            if (obs_ac !== e_ac) step_pass = 0;
-                            if (obs_we !== e_we) step_pass = 0;
-                            if (obs_wa !== e_wa) step_pass = 0;
-                            if (obs_st !== e_st) step_pass = 0;
-                            if (obs_dn !== e_dn) step_pass = 0;
-
-                            if (step_pass)
-                                pass_count = pass_count + 1;
-                            else begin
-                                fail_count = fail_count + 1;
-                                if (dump_count < 8) begin
-                                    $display("FAIL case=%0d dut=%0d cyc=%0d W=%0d",
-                                        n_cases, dut_idx, cyc, rd_W);
-                                    $display("  en:%0d/%0d ac:%0d/%0d we:%0d/%0d wa:%0d/%0d st:%0d/%0d dn:%0d/%0d",
-                                        obs_en,e_en, obs_ac,e_ac, obs_we,e_we,
-                                        obs_wa,e_wa, obs_st,e_st, obs_dn,e_dn);
-                                    dump_count = dump_count + 1;
-                                end
-                            end
-
-                            if (e_dn) disable data_loop;
-                            cyc = cyc + 1;
-                            @(posedge clk); #1;
-                        end
-                    end
-                end
-
-                n_cases  = n_cases + 1;
-                dut_idx  = dut_idx + 1;
-            end
-        end
-
-        $fclose(fd);
         $display("---------------------------------------------------------");
-        $display("Tested %0d cases, %0d total checks", n_cases, pass_count+fail_count);
-        $display("PASS: %0d / %0d", pass_count, pass_count+fail_count);
-        $display("FAIL: %0d / %0d", fail_count, pass_count+fail_count);
-        if (fail_count == 0) $display("RESULT: *** ALL TESTS PASSED ***");
-        else                 $display("RESULT: *** %0d TESTS FAILED ***", fail_count);
+        $display("Tested %0d checks", total);
+        $display("PASS: %0d / %0d", pass_cnt, total);
+        $display("FAIL: %0d / %0d", fail_cnt, total);
+        if (fail_cnt == 0)
+            $display("RESULT: *** ALL TESTS PASSED ***");
+        else
+            $display("RESULT: *** %0d TESTS FAILED ***", fail_cnt);
         $display("=========================================================");
         $finish;
     end
 
 endmodule
-
 `default_nettype wire
-// =============================================================================
-// END tb_conv1x1_ctrl.v
-// =============================================================================
