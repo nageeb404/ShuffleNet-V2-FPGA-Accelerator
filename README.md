@@ -6,12 +6,12 @@ A fully custom RTL implementation of the ShuffleNet V2 image classification netw
 
 ## Team
 
-| Name                                    |
-|-----------------------------------------|
-| Ahmed Ahmed Nageeb Ahmed Elbermawy      |
+| Name                                     |
+|------------------------------------------|
+| Ahmed Ahmed Nageeb Ahmed Elbermawy       |
 | Yousef Abdulrahman Abdulnabi Abdulrahman |
-| Mohamed Ahmed Roshdy Saad               |
-| Basmala Hatem Abdullah Mostafa          |
+| Mohamed Ahmed Roshdy Saad                |
+| Basmala Hatem Abdullah Mostafa           |
 
 ---
 
@@ -263,15 +263,7 @@ shufflenet_v2_fpga/
 │   ├── system_diagram.png            System-level block diagram (PS + PL)
 │   └── accelerator_diagram.png       Accelerator internal dataflow diagram
 │
-├── scripts/                          Synthesis scripts, constraints, and utilities
-│   ├── shufflenet.xdc                Timing constraint file (.xdc)
-│   ├── build_project.tcl             Vivado block design creation script
-│   ├── part0_synth_g1_ooc.tcl        Group 1 OOC synthesis script
-│   ├── part1_synth_g2_ooc.tcl        Group 2 OOC synthesis script
-│   ├── part2_synth_g3_ooc.tcl        Group 3 OOC synthesis script
-│   ├── part3_synth_and_impl.tcl      Top-level synthesis + implementation script
-│   ├── impl_timing.rpt               Post-implementation timing report
-│   ├── impl_utilization.rpt          Post-implementation utilization report
+├── scripts/                          Python model utilities and vector generators
 │   ├── shufflenet_q68.py             Bit-accurate Q6.8 software model
 │   ├── verify_accuracy.py            BN-folding verification script
 │   ├── common/                       Primitive test vector generators
@@ -279,6 +271,10 @@ shufflenet_v2_fpga/
 │   ├── group2/
 │   │   └── extract_weights_g2_g3.py  BN-folded hex files for G2 and G3 ROMs
 │   └── group3/                       Group 3 vector generators
+│
+│   (Synthesis scripts → vivado/scripts/ and vivado/work/)
+│   (Constraint file  → vivado/constraints/shufflenet.xdc)
+│   (Timing reports   → vivado/reports/)
 │
 ├── hls/                              Vitis HLS C++ reference models
 │   ├── src/
