@@ -525,7 +525,7 @@ open_hw_manager
 connect_hw_server
 open_hw_target
 program_hw_devices [get_hw_devices xczu19eg_0] \
-    -bitfile {vivado/work/shufflenet_zu19eg.bit}
+    -bitfile {vivado/shufflenet.bit}
 close_hw_manager
 ```
 
