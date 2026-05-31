@@ -129,7 +129,7 @@ module fc_filter_unit #(
     // -------------------------------------------------------------------------
     wire signed [TREE_W-1:0] tree_sum;
 
-    adder_tree_32 u_tree (
+    adder_tree_32 #(.IN_W(MUL_W)) u_tree (
         .in0(mac0),   .in1(mac1),   .in2(mac2),   .in3(mac3),
         .in4(mac4),   .in5(mac5),   .in6(mac6),   .in7(mac7),
         .in8(mac8),   .in9(mac9),   .in10(mac10), .in11(mac11),
