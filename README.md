@@ -4,6 +4,17 @@ A fully custom RTL implementation of the ShuffleNet V2 image classification netw
 
 ---
 
+## Team
+
+| Name                                    |
+|-----------------------------------------|
+| Ahmed Ahmed Nageeb Ahmed Elbermawy      |
+| Yousef Abdulrahman Abdulnabi Abdulrahman |
+| Mohamed Ahmed Roshdy Saad               |
+| Basmala Hatem Abdullah Mostafa          |
+
+---
+
 ## Table of Contents
 
 1. [System Overview](#system-overview)
@@ -248,7 +259,19 @@ shufflenet_v2_fpga/
 │   ├── tb_accelerator_ctrl.v
 │   └── tb_accelerator_top.v
 │
-├── scripts/                          Python utilities
+├── docs/                             Architecture diagrams and reports
+│   ├── system_diagram.png            System-level block diagram (PS + PL)
+│   └── accelerator_diagram.png       Accelerator internal dataflow diagram
+│
+├── scripts/                          Synthesis scripts, constraints, and utilities
+│   ├── shufflenet.xdc                Timing constraint file (.xdc)
+│   ├── build_project.tcl             Vivado block design creation script
+│   ├── part0_synth_g1_ooc.tcl        Group 1 OOC synthesis script
+│   ├── part1_synth_g2_ooc.tcl        Group 2 OOC synthesis script
+│   ├── part2_synth_g3_ooc.tcl        Group 3 OOC synthesis script
+│   ├── part3_synth_and_impl.tcl      Top-level synthesis + implementation script
+│   ├── impl_timing.rpt               Post-implementation timing report
+│   ├── impl_utilization.rpt          Post-implementation utilization report
 │   ├── shufflenet_q68.py             Bit-accurate Q6.8 software model
 │   ├── verify_accuracy.py            BN-folding verification script
 │   ├── common/                       Primitive test vector generators
@@ -360,20 +383,30 @@ This script:
 
 ## Synthesis and Implementation
 
-Run synthesis, place-and-route, and bitstream generation with a single command. The flow is single-threaded to operate within available system memory.
+The design uses a **split synthesis flow** to fit within 16 GB RAM. Each group is synthesized as a separate out-of-context checkpoint, then merged at implementation. Run each step from the project root **in your own terminal** (not through Claude Code):
 
 ```bash
-vivado/work/launch_synth.bat
-```
+# Step 1 — rebuild project (fast, ~2 min)
+vivado.bat -mode batch -source scripts/build_project.tcl -log vivado/work/build.log -journal vivado/work/build.jou
 
-Progress is logged to `vivado/work/synth_impl.log`. Expected runtime: **2–4 hours**.
+# Step 2 — Group 1 OOC synthesis (~3 min, ~4 GB RAM)
+vivado.bat -mode batch -source scripts/part0_synth_g1_ooc.tcl -log vivado/work/log_g1.log -journal vivado/work/log_g1.jou
+
+# Step 3 — Group 2 OOC synthesis (~9 min, ~8 GB RAM)
+vivado.bat -mode batch -source scripts/part1_synth_g2_ooc.tcl -log vivado/work/log_g2.log -journal vivado/work/log_g2.jou
+
+# Step 4 — Group 3 OOC synthesis (~11 min, ~6 GB RAM)
+vivado.bat -mode batch -source scripts/part2_synth_g3_ooc.tcl -log vivado/work/log_g3.log -journal vivado/work/log_g3.jou
+
+# Step 5 — top-level synthesis + implementation + bitstream (~1-3 hrs)
+vivado.bat -mode batch -source scripts/part3_synth_and_impl.tcl -log vivado/work/log_impl.log -journal vivado/work/log_impl.jou
+```
 
 Output files written on completion:
 
 | File                                   | Description                        |
 |----------------------------------------|------------------------------------|
-| `vivado/work/shufflenet_zu19eg.bit`    | Bitstream for device programming   |
-| `vivado/reports/synth_utilization.rpt` | Post-synthesis resource usage      |
+| `vivado/shufflenet.bit`                | Bitstream for device programming   |
 | `vivado/reports/impl_utilization.rpt`  | Post-implementation resource usage |
 | `vivado/reports/impl_timing.rpt`       | Timing summary (WNS, WHS)          |
 
@@ -381,27 +414,31 @@ Output files written on completion:
 
 ## Running Simulation
 
-Each RTL module has a dedicated Python test vector generator and Verilog testbench. The full simulation suite can be run from a single TCL script.
-
-### Run All Simulations
-
-```bash
-vivado -mode batch -source vivado/scripts/run_all.tcl
-```
+All 48 RTL modules have self-contained Verilog testbenches (no external vector files required). Each module has a dedicated simulation script under `vivado/scripts/`.
 
 ### Run a Single Module Simulation
 
-Example for `mac_unit`:
-
 ```bash
-# Step 1: Generate test vectors
-python scripts/common/gen_mac_unit_vectors.py
-
-# Step 2: Run XSim
+# Example: mac_unit
 vivado -mode batch -source vivado/scripts/common/sim_tb_mac_unit.tcl
+
+# Example: Group 2 PW convolution core
+vivado -mode batch -source vivado/scripts/group2/sim_tb_conv1x1_core.tcl
 ```
 
-The same pattern applies to every module — substitute the module name as needed.
+### Simulation Script Locations
+
+| Group    | Script directory                        |
+|----------|-----------------------------------------|
+| Common   | `vivado/scripts/common/sim_tb_*.tcl`    |
+| Group 1  | `vivado/scripts/group1/sim_tb_*.tcl`    |
+| Group 2  | `vivado/scripts/group2/sim_tb_*.tcl`    |
+| Group 3  | `vivado/scripts/group3/sim_tb_*.tcl`    |
+| Memories | `vivado/scripts/memories/sim_tb_*.tcl`  |
+| AXI      | `vivado/scripts/axi/sim_tb_*.tcl`       |
+| Top      | `vivado/scripts/sim_tb_accelerator_*.tcl` |
+
+All testbenches report `RESULT: *** ALL TESTS PASSED ***` on success.
 
 ---
 
@@ -555,7 +592,7 @@ Inference   : <time> ms
 
 ## HLS Reference Models
 
-Four progressively optimized Vitis HLS C++ models are provided to benchmark RTL efficiency against high-level synthesis. All models target the Kintex-7 (`xc7k160tfbg676-2`) for comparison.
+Four progressively optimized Vitis HLS C++ models are provided to benchmark RTL efficiency against high-level synthesis. All models target the iWave ZU19EG (`xczu19eg-ffvc1760-1-i`) for a direct same-silicon comparison with the RTL implementation.
 
 | Model           | Source File                      | Strategy                        |
 |-----------------|----------------------------------|---------------------------------|
