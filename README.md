@@ -276,7 +276,7 @@ shufflenet_v2_fpga/
 │   ├── accelerator_top.v                  Full accelerator integration
 │   └── shufflenet_board_top.v             Board wrapper: MMCM, reset sync, AXI
 │
-├── tb/                                    Self-contained Verilog testbenches (48 total, all pass)
+├── tb/                               Self-contained Verilog testbenches (48 total, all pass)
 │   ├── common/                            Common primitive testbenches + vectors
 │   │   ├── tb_Adder3.v
 │   │   ├── tb_adder_tree_9/12/29/32.v
@@ -455,23 +455,23 @@ This script:
 
 ## Synthesis and Implementation
 
-The design uses a **split synthesis flow** to fit within 16 GB RAM. Each group is synthesized as a separate out-of-context checkpoint, then merged at implementation. Run each step from the project root **in your own terminal** (not through Claude Code):
+The design uses a **split synthesis flow** to manage memory usage. Each group is synthesized as a separate out-of-context checkpoint, then merged at implementation. Run each step sequentially from the project root:
 
 ```bash
-# Step 1 — rebuild project (fast, ~2 min)
-vivado.bat -mode batch -source scripts/build_project.tcl -log vivado/work/build.log -journal vivado/work/build.jou
+# Step 1 — rebuild project (~2 min)
+vivado -mode batch -source vivado/scripts/build_project.tcl -log vivado/work/build.log -journal vivado/work/build.jou
 
-# Step 2 — Group 1 OOC synthesis (~3 min, ~4 GB RAM)
-vivado.bat -mode batch -source scripts/part0_synth_g1_ooc.tcl -log vivado/work/log_g1.log -journal vivado/work/log_g1.jou
+# Step 2 — Group 1 OOC synthesis (~3 min)
+vivado -mode batch -source vivado/work/part0_synth_g1_ooc.tcl -log vivado/work/log_g1.log -journal vivado/work/log_g1.jou
 
-# Step 3 — Group 2 OOC synthesis (~9 min, ~8 GB RAM)
-vivado.bat -mode batch -source scripts/part1_synth_g2_ooc.tcl -log vivado/work/log_g2.log -journal vivado/work/log_g2.jou
+# Step 3 — Group 2 OOC synthesis (~9 min)
+vivado -mode batch -source vivado/work/part1_synth_g2_ooc.tcl -log vivado/work/log_g2.log -journal vivado/work/log_g2.jou
 
-# Step 4 — Group 3 OOC synthesis (~11 min, ~6 GB RAM)
-vivado.bat -mode batch -source scripts/part2_synth_g3_ooc.tcl -log vivado/work/log_g3.log -journal vivado/work/log_g3.jou
+# Step 4 — Group 3 OOC synthesis (~11 min)
+vivado -mode batch -source vivado/work/part2_synth_g3_ooc.tcl -log vivado/work/log_g3.log -journal vivado/work/log_g3.jou
 
 # Step 5 — top-level synthesis + implementation + bitstream (~1-3 hrs)
-vivado.bat -mode batch -source scripts/part3_synth_and_impl.tcl -log vivado/work/log_impl.log -journal vivado/work/log_impl.jou
+vivado -mode batch -source vivado/work/part3_synth_and_impl.tcl -log vivado/work/log_impl.log -journal vivado/work/log_impl.jou
 ```
 
 Output files written on completion:
