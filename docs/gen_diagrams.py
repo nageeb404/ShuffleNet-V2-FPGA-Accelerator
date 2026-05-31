@@ -346,8 +346,8 @@ items = [
     mpatches.Patch(fc='#F9EBEA', ec='#CB4335', label='BRAM buffers (photo / maxpool / extra)'),
     mpatches.Patch(fc='#E8DAEF', ec='#6C3483', label='Group 3 modules'),
 ]
-ax.legend(handles=items, loc='lower right', fontsize=8.5,
-          framealpha=0.95, ncol=2, bbox_to_anchor=(0.99, 0.01))
+ax.legend(handles=items, loc='upper left', fontsize=8.5,
+          framealpha=0.95, ncol=1, bbox_to_anchor=(0.01, 0.99))
 
 plt.savefig('accelerator_diagram.png', dpi=150, bbox_inches='tight', facecolor='white')
 plt.close()
