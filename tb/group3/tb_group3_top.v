@@ -1,14 +1,14 @@
 // =============================================================================
 // tb_group3_top.v -- Structural smoke test for Module 3.5 (group3_top)
 // -----------------------------------------------------------------------------
-// / Figure 5.56
+// Thesis Sec 5.5 / Figure 5.56
 //
 // Tests:
-// 1. Module elaborates (no connectivity errors)
-// 2. After reset: group3_done=0, class_idx=0
-// 3. start_group transitions to active state (conv1x1_en=1)
-// 4. group3_done stays 0 for initial cycles (full run is ~47000 cycles)
-// 5. Reset restores initial state
+//   1. Module elaborates (no connectivity errors)
+//   2. After reset: group3_done=0, class_idx=0
+//   3. start_group transitions to active state (conv1x1_en=1)
+//   4. group3_done stays 0 for initial cycles (full run is ~47000 cycles)
+//   5. Reset restores initial state
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -23,8 +23,8 @@ module tb_group3_top;
     localparam integer N_FILT_1X1 = `G3_PW_PAR_FILT;  // 16
     localparam integer N_FC_PAR   = `G3_FC_PAR_CHAN;   // 32
     localparam integer G2_FM_W    = `G2_FM_W;          // 12 (Ch 6.2.8: G3 conv1x1 input)
-    localparam integer G3_PW_WW   = `G3_PW_WW;         // 9 (Ch 6.2.5: G3 PW weight)
-    localparam integer FC_WW      = `FC_WW;             // 9 (Ch 6.2.5: FC weight)
+    localparam integer G3_PW_WW   = `G3_PW_WW;         //  9 (Ch 6.2.5: G3 PW weight)
+    localparam integer FC_WW      = `FC_WW;             //  9 (Ch 6.2.5: FC weight)
     localparam integer FC_BIAS_W  = `FC_BIAS_W;        // 11 (Ch 6.2.5: FC bias)
 
     reg clk, rst;

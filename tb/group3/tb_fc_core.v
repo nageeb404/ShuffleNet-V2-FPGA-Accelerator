@@ -1,20 +1,20 @@
 // =============================================================================
 // tb_fc_core.v -- Self-checking testbench for Module 3.3 (fc_core)
 // -----------------------------------------------------------------------------
-// / Figure 5.60
+// Thesis Sec 5.5 / Figure 5.60
 //
 // Ch 6.2.5 + 6.2.8 update: DATA_W=9 (G3_FM_W), W_W=9 (FC_WW),
-// BIAS_WD=11 (FC_BIAS_W). Vector file must be regenerated in new bit widths.
+//   BIAS_WD=11 (FC_BIAS_W). Vector file must be regenerated in new bit widths.
 //
 // Vector file format per case:
-// Comment: // Case N
-// Header: N_PAR N_ACC (32 32)
-// Per step (N_ACC+1 steps including wait step):
-// acc_clr en
-// d0..d31 (32 hex values, DATA_W bits)
-// w0..w31 (32 hex values, W_W bits)
-// bias (1 hex value, BIAS_WD bits)
-// result (1 hex expected, DATA_W bits)
+//   Comment: // Case N
+//   Header: N_PAR N_ACC  (32 32)
+//   Per step (N_ACC+1 steps including wait step):
+//     acc_clr en
+//     d0..d31  (32 hex values, DATA_W bits)
+//     w0..w31  (32 hex values, W_W bits)
+//   bias      (1 hex value, BIAS_WD bits)
+//   result    (1 hex expected, DATA_W bits)
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -25,8 +25,8 @@
 module tb_fc_core;
 
     localparam N_PAR   = `G3_FC_PAR_CHAN;  // 32
-    localparam DATA_W  = `G3_FM_W;         // 9 (Ch 6.2.8)
-    localparam W_W     = `FC_WW;            // 9 (Ch 6.2.5)
+    localparam DATA_W  = `G3_FM_W;         //  9 (Ch 6.2.8)
+    localparam W_W     = `FC_WW;            //  9 (Ch 6.2.5)
     localparam BIAS_WD = `FC_BIAS_W;       // 11 (Ch 6.2.5)
 
     reg clk, rst;

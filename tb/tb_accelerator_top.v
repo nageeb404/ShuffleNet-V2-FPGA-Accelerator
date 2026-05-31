@@ -1,13 +1,13 @@
 // =============================================================================
 // tb_accelerator_top.v -- Structural smoke test for Module 4.2
 // -----------------------------------------------------------------------------
-// / Figure 5.72
+// Thesis Sec 5.6 / Figure 5.72
 //
 // Tests:
-// 1. Module elaborates (all ports connected, hierarchy correct)
-// 2. Reset: busy=0, classification_done=0
-// 3. photo_ready triggers busy and group1_start (via ctrl)
-// 4. System remains stable over several cycles
+//   1. Module elaborates (all ports connected, hierarchy correct)
+//   2. Reset: busy=0, classification_done=0
+//   3. photo_ready triggers busy and group1_start (via ctrl)
+//   4. System remains stable over several cycles
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -24,13 +24,13 @@ module tb_accelerator_top;
     localparam integer G3_PW_F    = `G3_PW_PAR_FILT;  // 16
     localparam integer G3_PW_C    = `G3_PW_PAR_CHAN;   // 29
     localparam integer G3_FC_C    = `G3_FC_PAR_CHAN;   // 32
-    localparam integer PHOTO_W    = `PHOTO_W;          // 8 (Ch 6.2.6)
+    localparam integer PHOTO_W    = `PHOTO_W;          //  8 (Ch 6.2.6)
     localparam integer G2_DW_WW   = `G2_DW_WW;         // 15 (Ch 6.2.5: DW weight)
     localparam integer G2_PW_WW   = `G2_PW_WW;         // 11 (Ch 6.2.5: PW weight)
     localparam integer G2_BIAS_W  = `G2_BIAS_W;        // 13 (Ch 6.2.5: PW bias)
     localparam integer G2_FM_W    = `G2_FM_W;          // 12 (Ch 6.2.8)
-    localparam integer G3_PW_WW   = `G3_PW_WW;         // 9 (Ch 6.2.5)
-    localparam integer FC_WW      = `FC_WW;             // 9 (Ch 6.2.5)
+    localparam integer G3_PW_WW   = `G3_PW_WW;         //  9 (Ch 6.2.5)
+    localparam integer FC_WW      = `FC_WW;             //  9 (Ch 6.2.5)
     localparam integer FC_BIAS_W  = `FC_BIAS_W;        // 11 (Ch 6.2.5)
 
     reg clk, rst;

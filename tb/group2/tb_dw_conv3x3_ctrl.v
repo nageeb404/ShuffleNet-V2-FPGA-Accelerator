@@ -1,18 +1,18 @@
 // =============================================================================
 // tb_dw_conv3x3_ctrl.v -- Self-checking testbench for Module 2.8
 // -----------------------------------------------------------------------------
-// / Figure 5.46
+// Thesis Sec 5.4.7.2 / Figure 5.46
 //
 // Connects dw_conv3x3_ctrl to a real group2_fifo_ctrl instance and verifies:
-// - start_fifo asserted for exactly 1 cycle on start
-// - en tracks shift_and_load from FIFO ctrl (when RUNNING)
-// - data_valid matches FIFO PROCESS state (fsm_state_fifo == 3)
-// - wr_addr increments each data_valid cycle
-// - done arrives exactly when done_fifo arrives
+//   - start_fifo asserted for exactly 1 cycle on start
+//   - en tracks shift_and_load from FIFO ctrl (when RUNNING)
+//   - data_valid matches FIFO PROCESS state (fsm_state_fifo == 3)
+//   - wr_addr increments each data_valid cycle
+//   - done arrives exactly when done_fifo arrives
 //
 // Vector file format per case:
-// Line 1: W H STRIDE (3 decimal tokens)
-// Per cycle (start cycle through done): start_fifo en data_valid wr_addr done
+//   Line 1: W H STRIDE (3 decimal tokens)
+//   Per cycle (start cycle through done): start_fifo en data_valid wr_addr done
 // =============================================================================
 
 `timescale 1ns / 1ps

@@ -1,7 +1,7 @@
 // =============================================================================
 // tb_adder_tree_32.v -- Self-checking testbench for adder_tree_32
 // -----------------------------------------------------------------------------
-// (FC layer adder tree)
+// Thesis Sec 5.5 (FC layer adder tree)
 //
 // Vector format: 32 signed hex inputs (IN_W=23) + 1 expected output (OUT_W=30)
 // Purely combinational DUT; checked with #1 settling delay.

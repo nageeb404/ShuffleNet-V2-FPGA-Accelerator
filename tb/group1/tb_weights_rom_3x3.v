@@ -1,21 +1,21 @@
 // =============================================================================
 // tb_weights_rom_3x3.v -- Self-checking testbench for Module 1.8
 // -----------------------------------------------------------------------------
-// "Weights Memory" / Figure 5.6
-// (Python golden -> hex file -> self-checking TB)
+// Thesis Sec 5.3.1.3 "Weights Memory" / Figure 5.6
+// Thesis Sec 5.8.1 (Python golden -> hex file -> self-checking TB)
 //
 // Verifies that for every (addr, filter, channel, row) combination, the
 // weights_rom_3x3 outputs the correct 15-bit weight on the flat bus.
 //
 // Check vector file format (weights_rom_3x3_tb_vectors.hex):
-// One line per check: addr filter channel row expected_weight_hex
-// 648 total checks (3 addr x 24 filters x 3 channels x 3 rows)
+//   One line per check:  addr  filter  channel  row  expected_weight_hex
+//   648 total checks (3 addr x 24 filters x 3 channels x 3 rows)
 //
 // For each check:
-// 1. Drive addr = addr_field
-// 2. Wait 1 ns (combinational settle)
-// 3. Extract weights_flat[(f*9 + c*3 + r)*DATA_W +: DATA_W]
-// 4. Compare to expected
+//   1. Drive addr = addr_field
+//   2. Wait 1 ns (combinational settle)
+//   3. Extract weights_flat[(f*9 + c*3 + r)*DATA_W +: DATA_W]
+//   4. Compare to expected
 //
 // Pass criterion: "RESULT: *** ALL TESTS PASSED ***"
 // =============================================================================
@@ -59,7 +59,7 @@ module tb_weights_rom_3x3;
     reg [8*256-1:0] line_buf;
 
     // The slice we read from weights_flat for (filter f, channel c, row r):
-    // base = (f*9 + c*3 + r) * DATA_W
+    //   base = (f*9 + c*3 + r) * DATA_W
     wire signed [DATA_W-1:0] slice_out;
     reg [15:0] slice_base;
     assign slice_out = weights_flat[slice_base +: DATA_W];
@@ -77,7 +77,7 @@ module tb_weights_rom_3x3;
         addr       = 2'd0;
 
         $display("=========================================================");
-        $display("weights_rom_3x3 Testbench");
+        $display("weights_rom_3x3 Testbench (Thesis Sec 5.3.1.3 / Fig 5.6)");
         $display("N_FILT=%0d N_CHAN=%0d N_WIN=%0d DATA_W=%0d",
                  N_FILT, N_CHAN, N_WIN, DATA_W);
         $display("=========================================================");

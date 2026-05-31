@@ -1,7 +1,7 @@
 // =============================================================================
 // tb_fifo_pool.v -- Self-checking testbench for Module 1.6 (fifo_pool)
 // -----------------------------------------------------------------------------
-// / Figure 5.11 / Figure 5.13
+// Thesis Sec 5.3.3 / Figure 5.11 / Figure 5.13
 // Same structure as tb_fifo_3x3 but DEPTH=231, TAP_STRIDE=114.
 // =============================================================================
 
@@ -57,7 +57,7 @@ module tb_fifo_pool;
         dut_padding_sel = 1'b0; dut_data_in = {DATA_W{1'b0}};
 
         $display("=========================================================");
-        $display("fifo_pool Testbench");
+        $display("fifo_pool Testbench (Thesis Sec 5.3.3)");
         $display("DEPTH=%0d  TAP_STRIDE=%0d", DEPTH, TAP_STRIDE);
         $display("=========================================================");
 

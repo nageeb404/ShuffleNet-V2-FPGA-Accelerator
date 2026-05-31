@@ -1,20 +1,20 @@
 // =============================================================================
 // tb_dw_conv3x3_filter_unit.v -- Self-checking testbench for Module 2.1
 // -----------------------------------------------------------------------------
-// / Figure 5.17
+// Thesis Sec 5.4.1.1 / Figure 5.17
 //
 // Ch 6.2.5 + 6.2.8 update: data=IN_W=10 (G1_FM_W), weights=W_W=15 (G2_DW_WW),
-// bias=BIAS_WD=15 (DATA_W), result=OUT_W=12 (G2_FM_W).
-// Vector file must be regenerated in new bit widths.
+//   bias=BIAS_WD=15 (DATA_W), result=OUT_W=12 (G2_FM_W).
+//   Vector file must be regenerated in new bit widths.
 //
 // Vector file format (2 lines per test case):
-// Line 1: d0..d8 w0..w8 (9 x IN_W-bit + 9 x W_W-bit hex values)
-// Line 2: bias expected (BIAS_WD-bit bias, OUT_W-bit expected)
+//   Line 1: d0..d8 w0..w8  (9 x IN_W-bit + 9 x W_W-bit hex values)
+//   Line 2: bias expected   (BIAS_WD-bit bias, OUT_W-bit expected)
 //
 // Pipeline timing (per test case):
-// negedge 0: drive d0..d8, w0..w8, en=1 [posedge 0: MAC latches]
-// negedge 1: drive bias
-// negedge 2: CHECK result
+//   negedge 0: drive d0..d8, w0..w8, en=1  [posedge 0: MAC latches]
+//   negedge 1: drive bias
+//   negedge 2: CHECK result
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -94,7 +94,7 @@ module tb_dw_conv3x3_filter_unit;
         dut_bias = {BIAS_WD{1'b0}};
 
         $display("=========================================================");
-        $display("dw_conv3x3_filter_unit Testbench");
+        $display("dw_conv3x3_filter_unit Testbench (Thesis Sec 5.4.1.1)");
         $display("Ch 6.2.5+6.2.8: IN_W=%0d W_W=%0d BIAS_WD=%0d OUT_W=%0d",
                  IN_W, W_W, BIAS_WD, OUT_W);
         $display("=========================================================");

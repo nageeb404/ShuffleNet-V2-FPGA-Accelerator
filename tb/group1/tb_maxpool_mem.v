@@ -1,17 +1,17 @@
 // =============================================================================
 // tb_maxpool_mem.v -- Self-checking testbench for Module 1.11 (maxpool_mem)
 // -----------------------------------------------------------------------------
-// "Max Pooling Memory" / Figure 5.4
+// Thesis Sec 5.3.1.2 "Max Pooling Memory" / Figure 5.4
 //
 // Uses N_CHAN=24, IMG_W=4, IMG_H=4 (DEPTH=16) for a fast test.
 // Writes all 16 addresses with known 24-channel pattern, then reads back
 // all 16 addresses and verifies all 24 channel values simultaneously.
 //
 // Vector file format: tb/common/vectors/maxpool_mem_tb_vectors.hex
-// W addr flat_hex -- write (1 clock, all 24 channels at once)
-// R addr flat_hex -- read check (1-cycle latency)
-// flat is a 360-bit hex value; flat[ch*15 +: 15] = value for channel ch.
-// Lines beginning with // are comments.
+//   W addr flat_hex    -- write (1 clock, all 24 channels at once)
+//   R addr flat_hex    -- read check (1-cycle latency)
+//   flat is a 360-bit hex value; flat[ch*15 +: 15] = value for channel ch.
+//   Lines beginning with // are comments.
 //
 // Pass criterion: "RESULT: *** ALL TESTS PASSED ***"
 // =============================================================================
@@ -96,7 +96,7 @@ module tb_maxpool_mem;
         addr_rd = {AW{1'b0}};
 
         $display("=========================================================");
-        $display("maxpool_mem Testbench");
+        $display("maxpool_mem Testbench (Thesis Sec 5.3.1.2 / Fig 5.4)");
         $display("N_CHAN=%0d IMG_W=%0d IMG_H=%0d DATA_W=%0d (SDP BRAM x24)",
                  N_CHAN, IMG_W, IMG_H, DATA_W);
         $display("=========================================================");

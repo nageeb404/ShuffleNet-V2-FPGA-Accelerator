@@ -1,10 +1,10 @@
 // =============================================================================
 // tb_conv1x1_g3_core.v -- Smoke test for Module 3.1 (conv1x1_g3_core)
 // -----------------------------------------------------------------------------
-// / Table 5.9
+// Thesis Sec 5.5 / Table 5.9
 //
 // Ch 6.2.5 + 6.2.8 update: IN_W=12 (G2_FM_W), W_W=9 (G3_PW_WW),
-// BIAS_WD=15, BIAS_OUT_W=27 (G3_CONV_OUT_W).
+//   BIAS_WD=15, BIAS_OUT_W=27 (G3_CONV_OUT_W).
 //
 // This testbench verifies: compilation, reset, and zero-input -> zero-output.
 // =============================================================================
@@ -19,7 +19,7 @@ module tb_conv1x1_g3_core;
     localparam integer N_FILT    = `G3_PW_PAR_FILT;  // 16
     localparam integer N_CHAN    = `G3_PW_PAR_CHAN;   // 29
     localparam integer IN_W      = `G2_FM_W;           // 12 (Ch 6.2.8)
-    localparam integer W_W       = `G3_PW_WW;          // 9 (Ch 6.2.5)
+    localparam integer W_W       = `G3_PW_WW;          //  9 (Ch 6.2.5)
     localparam integer BIAS_WD   = `DATA_W;            // 15
     localparam integer BIAS_OUT_W = `G3_CONV_OUT_W;   // 27 (Ch 6.2.5+6.2.8)
 

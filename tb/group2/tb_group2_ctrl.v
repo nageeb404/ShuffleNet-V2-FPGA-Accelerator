@@ -1,19 +1,19 @@
 // =============================================================================
 // tb_group2_ctrl.v -- Self-checking testbench for Module 2.10
 // -----------------------------------------------------------------------------
-// / Figures 5.51-5.54
+// Thesis Sec 5.4.7.4 / Figures 5.51-5.54
 //
 // Vector file format per case:
-// Line 1: NLOOPS DONE_LAT
-// NLOOPS = 16 (total Shuffle blocks)
-// DONE_LAT = number of cycles after a start pulse until done fires
-// Per cycle (after start_group posedge):
-// start[1:0] width[5:0] stride fsm_state[1:0] loops[4:0] group2_done
+//   Line 1: NLOOPS DONE_LAT
+//     NLOOPS  = 16 (total Shuffle blocks)
+//     DONE_LAT = number of cycles after a start pulse until done fires
+//   Per cycle (after start_group posedge):
+//     start[1:0] width[5:0] stride fsm_state[1:0] loops[4:0] group2_done
 //
 // done_dw / done_1x1 injection:
-// After each non-zero start pulse the TB counts DONE_LAT cycles, then
-// asserts both done signals for 1 posedge so the DUT advances to the next
-// block. This exactly mirrors the Python golden model.
+//   After each non-zero start pulse the TB counts DONE_LAT cycles, then
+//   asserts both done signals for 1 posedge so the DUT advances to the next
+//   block. This exactly mirrors the Python golden model.
 // =============================================================================
 
 `timescale 1ns / 1ps

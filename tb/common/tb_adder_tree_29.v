@@ -1,11 +1,11 @@
 // =============================================================================
 // tb_adder_tree_29.v -- Self-checking testbench for adder_tree_29 (Module 2.3)
 // -----------------------------------------------------------------------------
-//
+// Thesis Sec 5.4.1.2
 //
 // Vector file format (2 lines per test case):
-// Line 1: in0..in28 (29 x 6-hex 23-bit values)
-// Line 2: expected (1 x 8-hex 31-bit value)
+//   Line 1: in0..in28   (29 x 6-hex 23-bit values)
+//   Line 2: expected     (1 x 8-hex 31-bit value)
 //
 // DUT is purely combinational; drive inputs, wait #1, check output.
 // =============================================================================
@@ -66,7 +66,7 @@ module tb_adder_tree_29;
         dump_count = 0;
 
         $display("=========================================================");
-        $display("adder_tree_29 Testbench");
+        $display("adder_tree_29 Testbench (Thesis Sec 5.4.1.2)");
         $display("=========================================================");
 
         // ---- Open vector file ----

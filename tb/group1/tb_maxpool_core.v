@@ -1,16 +1,16 @@
 // =============================================================================
 // tb_maxpool_core.v -- Self-checking testbench for Module 1.4
 // -----------------------------------------------------------------------------
-// / Sec 5.3.2.2 / Table 5.2
+// Thesis Sec 5.8.1 / Sec 5.3.2.2 / Table 5.2
 //
 // Vector file format: 25 lines per test case
-// Lines 1-24: 9 hex values (channel 0..23 window inputs)
-// Line 25: 24 hex values (expected max per channel)
+//   Lines 1-24: 9 hex values (channel 0..23 window inputs)
+//   Line 25:    24 hex values (expected max per channel)
 //
 // Pipeline timing (1-cycle latency -- pipeline reg after stage 2):
-// negedge 0: drive inputs, en=1
-// (posedge 0: pipeline register captures stage-2 results)
-// negedge 1: CHECK results (stage-3 combinational output valid)
+//   negedge 0: drive inputs, en=1
+//   (posedge 0: pipeline register captures stage-2 results)
+//   negedge 1: CHECK results (stage-3 combinational output valid)
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -67,7 +67,7 @@ module tb_maxpool_core;
         dut_data   = {D_TOT{1'b0}};
 
         $display("=========================================================");
-        $display("maxpool_core Testbench");
+        $display("maxpool_core Testbench (Thesis Sec 5.3.2.2, Table 5.2)");
         $display("24 channels x 9-window max-of-9 with 1-cycle pipeline");
         $display("=========================================================");
 
@@ -97,8 +97,8 @@ module tb_maxpool_core;
 
         // ====================================================================
         // Main loop: 25 lines per test case
-        // Lines 1-24: channel window (9 values each)
-        // Line 25: expected outputs (24 values)
+        //   Lines 1-24: channel window (9 values each)
+        //   Line 25:    expected outputs (24 values)
         // ====================================================================
         begin : main_loop
             while (!$feof(fd)) begin

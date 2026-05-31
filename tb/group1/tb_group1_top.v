@@ -1,14 +1,14 @@
 // =============================================================================
 // tb_group1_top.v -- Structural smoke-test for Module 1.13 (group1_top)
 // -----------------------------------------------------------------------------
-// "Group 1 Design" / Figure 5.4
+// Thesis Sec 5.3 "Group 1 Design" / Figure 5.4
 //
 // This testbench is a STRUCTURAL SMOKE TEST, not a full functional simulation.
 // It verifies:
-// 1) The module instantiates without port mismatch / unconnected errors
-// 2) Reset completes cleanly (no X on control outputs)
-// 3) start pulse propagates to start_fifo (checked via done behavior)
-// 4) The module simulates for 50 cycles without fatal errors
+//   1) The module instantiates without port mismatch / unconnected errors
+//   2) Reset completes cleanly (no X on control outputs)
+//   3) start pulse propagates to start_fifo (checked via done behavior)
+//   4) The module simulates for 50 cycles without fatal errors
 //
 // A full functional test (writing a 224x224 image and verifying maxpool output)
 // would require ~100k+ simulation cycles and is deferred to integration testing.
@@ -24,7 +24,7 @@
 module tb_group1_top;
 
     localparam integer DATA_W   = `DATA_W;       // 15 (bias/original)
-    localparam integer PHOTO_W  = `PHOTO_W;      // 8 (Ch 6.2.6)
+    localparam integer PHOTO_W  = `PHOTO_W;      //  8 (Ch 6.2.6)
     localparam integer G1_FM_W  = `G1_FM_W;      // 10 (Ch 6.2.8)
     localparam integer N_CH     = `G1_OUT_C;
     localparam integer PHOTO_AW = `PHOTO_MEM_AW;
@@ -81,7 +81,7 @@ module tb_group1_top;
         start        = 1'b0;
 
         $display("=========================================================");
-        $display("group1_top Smoke Test");
+        $display("group1_top Smoke Test (Thesis Sec 5.3 / Fig 5.4)");
         $display("Structural compilation and reset verification only.");
         $display("Full functional test deferred (224x224 image too slow).");
         $display("=========================================================");

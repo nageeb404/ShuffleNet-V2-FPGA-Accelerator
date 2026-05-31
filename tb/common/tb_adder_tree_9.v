@@ -1,14 +1,14 @@
 // =============================================================================
 // tb_adder_tree_9.v - Self-checking testbench for adder_tree_9
 // -----------------------------------------------------------------------------
-// Methodology: (Python golden -> hex -> $readmemh -> compare)
+// Methodology: Thesis Sec 5.8.1 (Python golden -> hex -> $readmemh -> compare)
 //
 // adder_tree_9 is purely combinational, so no clock is required. The TB
 // drives one vector at a time with a small #1 settling delay, mirroring the
 // approach used for tb_Adder3.
 //
 // Run (with Vivado XSim):
-// source {N:\GP\shufflenet_rtl\vivado\scripts\sim_tb_adder_tree_9.tcl}
+//   source {N:\GP\shufflenet_rtl\vivado\scripts\sim_tb_adder_tree_9.tcl}
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -69,7 +69,7 @@ module tb_adder_tree_9;
         dump_count  = 0;
 
         $display("=========================================================");
-        $display("adder_tree_9 Self-Checking Testbench");
+        $display("adder_tree_9 Self-Checking Testbench (Thesis Sec 5.3.2.1)");
         $display("=========================================================");
 
         // ---- Open vector file ----

@@ -1,14 +1,14 @@
 // =============================================================================
 // tb_group3_ctrl.v -- Structural smoke test for Module 3.4 (group3_ctrl)
 // -----------------------------------------------------------------------------
-// / Table 5.12, Figure 5.68
+// Thesis Sec 5.5 / Table 5.12, Figure 5.68
 //
 // Tests:
-// 1. After reset: outputs are zero, state is IDLE
-// 2. start_group triggers conv1x1_en and conv1x1_acc_clr on cycle 1
-// 3. acc_clr de-asserts after 2 cycles (pipeline settling)
-// 4. extramem_rd_addr advances every cycle
-// 5. group3_done stays 0 initially (full run takes ~47000 cycles)
+//   1. After reset: outputs are zero, state is IDLE
+//   2. start_group triggers conv1x1_en and conv1x1_acc_clr on cycle 1
+//   3. acc_clr de-asserts after 2 cycles (pipeline settling)
+//   4. extramem_rd_addr advances every cycle
+//   5. group3_done stays 0 initially (full run takes ~47000 cycles)
 // =============================================================================
 
 `timescale 1ns / 1ps

@@ -1,16 +1,16 @@
 // =============================================================================
 // tb_accelerator_ctrl.v -- Self-checking testbench for Module 4.1
 // -----------------------------------------------------------------------------
-// / Figure 5.70
+// Thesis Sec 5.6 / Figure 5.70
 //
 // Tests the 5-state FSM transitions:
-// 1. IDLE -> G1 on photo_ready
-// 2. G1 -> G1_2 on group1_done (with and without photo_ready)
-// 3. G1_2 -> G1_2_3 on group2_done
-// 4. G1_2_3 -> IDLE on group3_done (no new image)
-// 5. G1_2_3 -> G1_3 -> G1_2 (full pipeline with new images)
-// 6. busy assertion/deassertion
-// 7. ping_pong_sel toggle
+//   1. IDLE -> G1 on photo_ready
+//   2. G1 -> G1_2 on group1_done (with and without photo_ready)
+//   3. G1_2 -> G1_2_3 on group2_done
+//   4. G1_2_3 -> IDLE on group3_done (no new image)
+//   5. G1_2_3 -> G1_3 -> G1_2 (full pipeline with new images)
+//   6. busy assertion/deassertion
+//   7. ping_pong_sel toggle
 // =============================================================================
 
 `timescale 1ns / 1ps

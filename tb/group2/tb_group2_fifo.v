@@ -1,15 +1,15 @@
 // =============================================================================
 // tb_group2_fifo.v -- Self-checking testbench for Module 2.6
 // -----------------------------------------------------------------------------
-// / Figure 5.36, 5.37, 5.38
+// Thesis Sec 5.4.6 / Figure 5.36, 5.37, 5.38
 //
 // Vector file format per case:
-// Line 1: width_sel (1 hex token, 0-3)
-// N_STEPS lines: shift_load padding_sel data_in tap00..tap22 (12 tokens)
-// Blank line between cases (skipped)
+//   Line 1: width_sel (1 hex token, 0-3)
+//   N_STEPS lines: shift_load padding_sel data_in tap00..tap22  (12 tokens)
+//   Blank line between cases (skipped)
 //
 // Timing: drive inputs -> @(posedge clk) -> shift reg updates ->
-// combinational taps settle -> #1 -> CHECK
+//         combinational taps settle -> #1 -> CHECK
 // =============================================================================
 
 `timescale 1ns / 1ps

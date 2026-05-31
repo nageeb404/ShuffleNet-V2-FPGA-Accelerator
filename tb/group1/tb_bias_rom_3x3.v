@@ -1,15 +1,15 @@
 // =============================================================================
 // tb_bias_rom_3x3.v -- Self-checking testbench for Module 1.9 (bias_rom_3x3)
 // -----------------------------------------------------------------------------
-// "Bias Memory" / Figure 5.7
-// (Python golden -> hex file -> self-checking TB)
+// Thesis Sec 5.3.1.4 "Bias Memory" / Figure 5.7
+// Thesis Sec 5.8.1 (Python golden -> hex file -> self-checking TB)
 //
 // The DUT is purely combinational (no clock needed).
 // Checks that biases_flat[f*DATA_W +: DATA_W] matches the expected value
 // for every filter f (0..23).
 //
 // Vector file: bias_rom_3x3_tb_vectors.hex
-// Format: filter expected_bias_hex (24 lines, one per filter)
+//   Format: filter  expected_bias_hex  (24 lines, one per filter)
 //
 // Pass criterion: "RESULT: *** ALL TESTS PASSED ***"
 // =============================================================================
@@ -62,7 +62,7 @@ module tb_bias_rom_3x3;
         dump_count = 0;
 
         $display("=========================================================");
-        $display("bias_rom_3x3 Testbench");
+        $display("bias_rom_3x3 Testbench (Thesis Sec 5.3.1.4 / Fig 5.7)");
         $display("N_FILT=%0d  DATA_W=%0d  (all outputs combinational)",
                  N_FILT, DATA_W);
         $display("=========================================================");

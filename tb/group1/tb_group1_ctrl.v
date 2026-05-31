@@ -1,7 +1,7 @@
 // =============================================================================
 // tb_group1_ctrl.v -- Self-checking testbench for Module 1.12 (group1_ctrl)
 // -----------------------------------------------------------------------------
-// "Group1 Controller" / Figure 5.4
+// Thesis Sec 5.3.4.2 "Group1 Controller" / Figure 5.4
 //
 // Simulates a IDLE -> LDROW -> LDWIN -> PROCESS (4 pixels x 4 clocks) -> IDLE
 // sequence and verifies that group1_ctrl drives the correct control signals.
@@ -9,7 +9,7 @@
 // Each vector line drives fsm_state and checks en, acc_clr, addr, conv_valid.
 //
 // Vector file: tb/common/vectors/group1_ctrl_tb_vectors.hex
-// Format: fsm_state exp_en exp_acc_clr exp_addr exp_conv_valid
+//   Format: fsm_state exp_en exp_acc_clr exp_addr exp_conv_valid
 //
 // Pass criterion: "RESULT: *** ALL TESTS PASSED ***"
 // =============================================================================
@@ -78,7 +78,7 @@ module tb_group1_ctrl;
         start     = 1'b0;
 
         $display("=========================================================");
-        $display("group1_ctrl Testbench");
+        $display("group1_ctrl Testbench (Thesis Sec 5.3.4.2 / Fig 5.4)");
         $display("col_cnt cycles 0->1->2->3->0 in PROCESS state");
         $display("=========================================================");
 
@@ -107,8 +107,8 @@ module tb_group1_ctrl;
 
         // -----------------------------------------------------------------------
         // Process one vector per clock cycle:
-        // - Drive fsm_state before posedge
-        // - After posedge+#1: check output signals
+        //   - Drive fsm_state before posedge
+        //   - After posedge+#1: check output signals
         // -----------------------------------------------------------------------
         begin : file_loop
             while (!$feof(fd)) begin

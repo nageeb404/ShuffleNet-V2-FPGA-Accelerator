@@ -1,12 +1,12 @@
 // =============================================================================
 // tb_conv1x1_ctrl.v -- Self-checking testbench for Module 2.9
 // -----------------------------------------------------------------------------
-// / Figures 5.48, 5.49, 5.50
+// Thesis Sec 5.4.7.3 / Figures 5.48, 5.49, 5.50
 //
 // Vector file format per case:
-// Line 1: W H N_ACC (3 decimal tokens)
-// Per cycle (after start posedge): en acc_clr we wr_addr step_out done
-// Blank line between cases.
+//   Line 1: W H N_ACC  (3 decimal tokens)
+//   Per cycle (after start posedge): en acc_clr we wr_addr step_out done
+//   Blank line between cases.
 //
 // Timing: start asserted for 1 posedge -> cyc=0 checks DUT after start posedge.
 // All DUT outputs (en, acc_clr, done registered; we/wr_addr/step_out combinational)

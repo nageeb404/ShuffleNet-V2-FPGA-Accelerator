@@ -1,23 +1,23 @@
 // =============================================================================
 // tb_conv3x3_core.v -- Self-checking testbench for Module 1.3b
 // -----------------------------------------------------------------------------
-// / Sec 5.3.2.1 / Table 5.1
+// Thesis Sec 5.8.1 / Sec 5.3.2.1 / Table 5.1
 //
 // Ch 6.2.5 + 6.2.8 update: IN_W=8 (data), W_W=12 (weights), BIAS_WD=15,
-// OUT_W=10 (results). Vector file must be regenerated in new bit widths.
+//   OUT_W=10 (results). Vector file must be regenerated in new bit widths.
 //
 // Vector file format: 123 lines per test case
-// Row r (r=0,1,2): line 1 = 9 shared data values (hex, IN_W bits)
-// lines 2-25 = 9 weights for filter 0..23 (W_W bits, one filter/line)
-// Lines 76-99: one bias per filter (1 hex value per line, BIAS_WD bits)
-// Lines 100-123: one expected result per filter (OUT_W bits)
+//   Row r (r=0,1,2): line 1 = 9 shared data values (hex, IN_W bits)
+//                    lines 2-25 = 9 weights for filter 0..23 (W_W bits, one filter/line)
+//   Lines 76-99:  one bias per filter (1 hex value per line, BIAS_WD bits)
+//   Lines 100-123: one expected result per filter (OUT_W bits)
 //
 // Pipeline timing (identical to conv3x3_filter_unit):
-// negedge 0: drive row0 data + row0 weights, acc_clr=1
-// negedge 1: drive row1 data + row1 weights, acc_clr=1, drive biases
-// negedge 2: drive row2 data + row2 weights, acc_clr=0
-// negedge 3: wait
-// negedge 4: CHECK all 24 results
+//   negedge 0: drive row0 data + row0 weights, acc_clr=1
+//   negedge 1: drive row1 data + row1 weights, acc_clr=1, drive biases
+//   negedge 2: drive row2 data + row2 weights, acc_clr=0
+//   negedge 3: wait
+//   negedge 4: CHECK all 24 results
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -28,7 +28,7 @@
 module tb_conv3x3_core;
 
     localparam integer N_FILT  = `G1_CONV_PAR_FILT;        // 24
-    localparam integer IN_W    = `PHOTO_W;                  // 8 (Ch 6.2.8)
+    localparam integer IN_W    = `PHOTO_W;                  // 8  (Ch 6.2.8)
     localparam integer W_W     = `G1_CONV_WW;              // 12 (Ch 6.2.5)
     localparam integer BIAS_WD = `DATA_W;                   // 15 (bias width)
     localparam integer OUT_W   = `G1_FM_W;                 // 10 (Ch 6.2.8)
@@ -97,7 +97,7 @@ module tb_conv3x3_core;
         dut_biases  = {B_TOT{1'b0}};
 
         $display("=========================================================");
-        $display("conv3x3_core Testbench");
+        $display("conv3x3_core Testbench (Thesis Sec 5.3.2.1, Table 5.1)");
         $display("24 parallel filter units, shared 9-element data bus");
         $display("Ch 6.2.5+6.2.8: IN_W=%0d W_W=%0d BIAS_WD=%0d OUT_W=%0d",
                  IN_W, W_W, BIAS_WD, OUT_W);

@@ -1,24 +1,24 @@
 // =============================================================================
 // tb_conv3x3_filter_unit.v -- Self-checking testbench for Module 1.3a
 // -----------------------------------------------------------------------------
-// (Python golden -> hex file -> self-checking TB)
-// (filter unit behaviour)
+// Thesis Sec 5.8.1 (Python golden -> hex file -> self-checking TB)
+// Thesis Sec 5.3.2.1 (filter unit behaviour)
 //
 // Ch 6.2.5 + 6.2.8 update: data=IN_W=8, weights=W_W=12, bias=BIAS_WD=15,
-// result=OUT_W=10. Vector file must be regenerated in new bit widths.
+//   result=OUT_W=10. Vector file must be regenerated in new bit widths.
 //
 // Vector file format (4 lines per test case):
-// Line 1: d[0..8] w[0..8] -- row 0 data (8-bit) and weights (12-bit), 18 hex tokens
-// Line 2: d[0..8] w[0..8] -- row 1
-// Line 3: d[0..8] w[0..8] -- row 2
-// Line 4: bias expected -- 15-bit bias, 10-bit expected
+//   Line 1: d[0..8] w[0..8]  -- row 0 data (8-bit) and weights (12-bit), 18 hex tokens
+//   Line 2: d[0..8] w[0..8]  -- row 1
+//   Line 3: d[0..8] w[0..8]  -- row 2
+//   Line 4: bias  expected    -- 15-bit bias, 10-bit expected
 //
 // Pipeline timing (per test case):
-// negedge 0: drive row0, en=1, acc_clr=1
-// negedge 1: drive row1, en=1, acc_clr=1
-// negedge 2: drive row2, en=1, acc_clr=0, drive bias
-// negedge 3: wait
-// negedge 4: CHECK result
+//   negedge 0: drive row0,  en=1, acc_clr=1
+//   negedge 1: drive row1,  en=1, acc_clr=1
+//   negedge 2: drive row2,  en=1, acc_clr=0, drive bias
+//   negedge 3: wait
+//   negedge 4: CHECK result
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -28,7 +28,7 @@
 
 module tb_conv3x3_filter_unit;
 
-    localparam integer IN_W    = `PHOTO_W;    // 8 (Ch 6.2.8: photo pixel input)
+    localparam integer IN_W    = `PHOTO_W;    // 8  (Ch 6.2.8: photo pixel input)
     localparam integer W_W     = `G1_CONV_WW; // 12 (Ch 6.2.5: weight width)
     localparam integer BIAS_WD = `DATA_W;     // 15 (bias kept at original width)
     localparam integer OUT_W   = `G1_FM_W;   // 10 (Ch 6.2.8: G1 FM output)
@@ -113,7 +113,7 @@ module tb_conv3x3_filter_unit;
         dut_bias = {BIAS_WD{1'b0}};
 
         $display("=========================================================");
-        $display("conv3x3_filter_unit Testbench");
+        $display("conv3x3_filter_unit Testbench (Thesis Sec 5.3.2.1)");
         $display("Ch 6.2.5+6.2.8: IN_W=%0d W_W=%0d BIAS_WD=%0d OUT_W=%0d",
                  IN_W, W_W, BIAS_WD, OUT_W);
         $display("=========================================================");

@@ -1,23 +1,24 @@
 // =============================================================================
 // tb_mac_unit.v - Self-checking testbench for mac_unit
 // -----------------------------------------------------------------------------
-// Methodology: (Python golden -> hex -> $readmemh -> compare)
+// Methodology: Thesis Sec 5.8.1 (Python golden -> hex -> $readmemh -> compare)
 //
 // Differences from Phase 0 TBs (Adder3, quantizer):
-// - mac_unit is SEQUENTIAL (it has a pipeline register on the output).
-// - Need a clock and a reset.
-// - Account for the 1-cycle latency between driving inputs and sampling
-// the output.
+//   - mac_unit is SEQUENTIAL (it has a pipeline register on the output).
+//   - Need a clock and a reset.
+//   - Account for the 1-cycle latency between driving inputs and sampling
+//     the output.
 //
 // TB strategy:
-// 1) Generate clock at 100 MHz (10 ns period).
-// 2) Assert async reset for a few cycles, then deassert.
-// 3) For each vector i, drive inputs at clock edge T_i.
-// At T_{i+1}, sample p_out (it now holds the product of vector i).
-// 4) Compare against the expected value.
+//   1) Generate clock at 100 MHz (10 ns period -- matches the thesis target
+//      from Sec 9.1.2.2).
+//   2) Assert async reset for a few cycles, then deassert.
+//   3) For each vector i, drive inputs at clock edge T_i.
+//      At T_{i+1}, sample p_out (it now holds the product of vector i).
+//   4) Compare against the expected value.
 //
 // Run (with Vivado XSim):
-// vivado -mode batch -source vivado/scripts/sim_tb_mac_unit.tcl
+//   vivado -mode batch -source vivado/scripts/sim_tb_mac_unit.tcl
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -85,7 +86,7 @@ module tb_mac_unit;
         b_i        = {DATA_W{1'b0}};
 
         $display("=========================================================");
-        $display("mac_unit Self-Checking Testbench");
+        $display("mac_unit Self-Checking Testbench (Thesis Sec 5.3.2.1)");
         $display("=========================================================");
 
         // ---- Open vector file ----

@@ -1,22 +1,22 @@
 // =============================================================================
 // tb_photo_mem.v -- Self-checking testbench for Module 1.10 (photo_mem)
 // -----------------------------------------------------------------------------
-// "Photo Memory" / Figure 5.5
+// Thesis Sec 5.3.1.1 "Photo Memory" / Figure 5.5
 //
 // Uses a small image (IMG_W=4, IMG_H=4) so the test runs fast.
 // Exercises the full ping-pong protocol:
-// Phase A: write bank0 (mem_select=0), 16 addresses x 3 channels
-// Phase B: switch mem_select=1, read bank0 and verify
-// Phase C: write bank1 (mem_select=1) with a different pattern
-// Phase D: switch mem_select=0, read bank1 and verify
+//   Phase A: write bank0 (mem_select=0), 16 addresses x 3 channels
+//   Phase B: switch mem_select=1, read bank0 and verify
+//   Phase C: write bank1 (mem_select=1) with a different pattern
+//   Phase D: switch mem_select=0, read bank1 and verify
 //
 // Writing: 3 cycles per address (one clock per channel, shared data_in bus).
 // Reading: 1 cycle latency (BRAM registered read + registered output mux).
 //
 // Vector file format: tb/common/vectors/photo_mem_tb_vectors.hex
-// W addr data_ch1 data_ch2 data_ch3 -- write operation (3 clocks)
-// R addr exp_ch1 exp_ch2 exp_ch3 -- read check (1 clock)
-// Lines beginning with // are comments.
+//   W addr data_ch1 data_ch2 data_ch3   -- write operation (3 clocks)
+//   R addr exp_ch1  exp_ch2  exp_ch3    -- read check      (1 clock)
+//   Lines beginning with // are comments.
 //
 // Pass criterion: "RESULT: *** ALL TESTS PASSED ***"
 // =============================================================================
@@ -106,7 +106,7 @@ module tb_photo_mem;
         mem_select = 1'b0;
 
         $display("=========================================================");
-        $display("photo_mem Testbench");
+        $display("photo_mem Testbench (Thesis Sec 5.3.1.1 / Fig 5.5)");
         $display("IMG_W=%0d IMG_H=%0d DATA_W=%0d (ping-pong BRAM)",
                  IMG_W, IMG_H, DATA_W);
         $display("=========================================================");
@@ -175,7 +175,7 @@ module tb_photo_mem;
 
                 end else if (op_char == "R" || op_char == "r") begin
                     // ----------------------------------------------------------
-                    // Read: 1 clock cycle. First R after a write phase toggles
+                    // Read: 1 clock cycle.  First R after a write phase toggles
                     // mem_select so the accelerator reads the bank just written.
                     // ----------------------------------------------------------
                     we = 3'b000;

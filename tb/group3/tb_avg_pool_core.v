@@ -1,23 +1,23 @@
 // =============================================================================
 // tb_avg_pool_core.v -- Self-checking testbench for Module 3.2
 // -----------------------------------------------------------------------------
-// / Figures 5.58, 5.59
+// Thesis Sec 5.5 / Figures 5.58, 5.59
 //
 // Ch 6.2.5 + 6.2.8 update: IN_W=27 (G3_CONV_OUT_W -- full-precision 1x1 output),
-// DATA_W=9 (G3_FM_W -- avgpool quantized output).
-// Vector file must be regenerated: input pixels are now 27-bit, outputs 9-bit.
+//   DATA_W=9 (G3_FM_W -- avgpool quantized output).
+//   Vector file must be regenerated: input pixels are now 27-bit, outputs 9-bit.
 //
 // Vector file format per case:
-// Comment: // Case N
-// Header: N_CHAN N_PIX (e.g. "16 49")
-// N_PIX data lines: N_CHAN hex values (IN_W bits each)
-// Result line: N_CHAN hex expected outputs (DATA_W bits each)
+//   Comment: // Case N
+//   Header:  N_CHAN N_PIX   (e.g. "16 49")
+//   N_PIX data lines: N_CHAN hex values (IN_W bits each)
+//   Result line: N_CHAN hex expected outputs (DATA_W bits each)
 //
 // Timing:
-// acc_clr for 1 cycle to reset accumulators.
-// acc_en for N_PIX cycles, feeding one pixel per cycle.
-// result_we for 1 cycle to capture result.
-// results_flat checked 1 cycle after result_we.
+//   acc_clr for 1 cycle to reset accumulators.
+//   acc_en for N_PIX cycles, feeding one pixel per cycle.
+//   result_we for 1 cycle to capture result.
+//   results_flat checked 1 cycle after result_we.
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -29,7 +29,7 @@ module tb_avg_pool_core;
 
     localparam integer N_CHAN = `G3_PW_PAR_FILT;   // 16
     localparam integer IN_W  = `G3_CONV_OUT_W;     // 27 (Ch 6.2.5+6.2.8: full-precision)
-    localparam integer DATA_W = `G3_FM_W;           // 9 (Ch 6.2.8: quantized output)
+    localparam integer DATA_W = `G3_FM_W;           //  9 (Ch 6.2.8: quantized output)
 
     reg clk, rst;
     initial clk = 1'b0;

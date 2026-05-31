@@ -1,20 +1,20 @@
 // =============================================================================
 // tb_dw_conv3x3_core.v -- Self-checking testbench for Module 2.2
 // -----------------------------------------------------------------------------
-// / Table 5.3
+// Thesis Sec 5.4.1.1 / Table 5.3
 //
 // Ch 6.2.5 + 6.2.8 update: IN_W=10 (data), W_W=15 (weights), BIAS_WD=15,
-// OUT_W=12 (results). Vector file must be regenerated in new bit widths.
+//   OUT_W=12 (results). Vector file must be regenerated in new bit widths.
 //
 // Vector file format: 58 lines per test case (one line per filter).
-// Each line: d0..d8 w0..w8 bias expected (9+9+1+1 = 20 hex tokens)
-// Cases are separated by blank lines; comment lines start with '/'.
+//   Each line: d0..d8 w0..w8 bias expected  (9+9+1+1 = 20 hex tokens)
+//   Cases are separated by blank lines; comment lines start with '/'.
 //
 // Pipeline timing (Sec 5.4.1.1):
-// Build data_flat, wts_flat, biases_flat by reading 58 filter lines.
-// negedge 0: all buses already driven; posedge 0 latches 58*9 MACs.
-// negedge 1: (biases_flat already wired; bias add is combinational).
-// negedge 2: CHECK all 58 results against stored expected values.
+//   Build data_flat, wts_flat, biases_flat by reading 58 filter lines.
+//   negedge 0: all buses already driven; posedge 0 latches 58*9 MACs.
+//   negedge 1: (biases_flat already wired; bias add is combinational).
+//   negedge 2: CHECK all 58 results against stored expected values.
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -90,7 +90,7 @@ module tb_dw_conv3x3_core;
         biases_flat = {(N_FILT*BIAS_WD){1'b0}};
 
         $display("=========================================================");
-        $display("dw_conv3x3_core Testbench  N_FILT=%0d", N_FILT);
+        $display("dw_conv3x3_core Testbench  N_FILT=%0d  (Thesis Sec 5.4.1.1)", N_FILT);
         $display("Ch 6.2.5+6.2.8: IN_W=%0d W_W=%0d BIAS_WD=%0d OUT_W=%0d",
                  IN_W, W_W, BIAS_WD, OUT_W);
         $display("=========================================================");

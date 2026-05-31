@@ -1,7 +1,7 @@
 // =============================================================================
 // tb_group2_fifo_ctrl.v -- Self-checking testbench for Module 2.7
 // -----------------------------------------------------------------------------
-// / Figure 5.39
+// Thesis Sec 5.4.7.1 / Figure 5.39
 //
 // One test case per (W, H, STRIDE) configuration.
 // The DUT is re-parameterized per case using a parameter-override trick:
@@ -13,13 +13,13 @@
 // The vector file is read and each cycle's outputs are compared.
 //
 // Vector file format per case:
-// Line 1: W H STRIDE (3 decimal tokens)
-// Per cycle: shift_load padding_sel fsm_state rd_ptr done (5 decimal tokens)
-// Blank line between cases.
+//   Line 1: W H STRIDE  (3 decimal tokens)
+//   Per cycle: shift_load padding_sel fsm_state rd_ptr done (5 decimal tokens)
+//   Blank line between cases.
 //
 // Timing: start is asserted at cycle 0 (after reset).
-// Each subsequent cycle advances the FSM.
-// Outputs are registered; we compare them AFTER each posedge.
+//         Each subsequent cycle advances the FSM.
+//         Outputs are registered; we compare them AFTER each posedge.
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -36,7 +36,7 @@ module tb_group2_fifo_ctrl;
 
     // ---- One DUT instance per test config (Verilog-2001 workaround) ----
     // Configs: (W=7,H=7,S=1), (W=14,H=14,S=1), (W=28,H=28,S=1),
-    // (W=14,H=14,S=2), (W=28,H=28,S=2), (W=56,H=56,S=2)
+    //          (W=14,H=14,S=2), (W=28,H=28,S=2), (W=56,H=56,S=2)
     localparam N_DUTS = 6;
 
     reg  start_r [0:N_DUTS-1];

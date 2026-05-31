@@ -1,20 +1,20 @@
 // =============================================================================
 // tb_quantizer.v - Self-checking TB for the saturating quantizer
 // -----------------------------------------------------------------------------
-// Methodology: (Python golden -> hex -> $readmemh -> compare)
+// Methodology: Thesis Sec 5.8.1 (Python golden -> hex -> $readmemh -> compare)
 //
 // This testbench instantiates TWO copies of the quantizer:
-// - dut_signed : HAS_RELU = 0 (full two-sided saturation, Sec 5.4.1.1)
-// - dut_relu : HAS_RELU = 1 (one-sided post-ReLU saturation, Sec 5.4.1.2)
+//   - dut_signed : HAS_RELU = 0 (full two-sided saturation, Sec 5.4.1.1)
+//   - dut_relu   : HAS_RELU = 1 (one-sided post-ReLU saturation, Sec 5.4.1.2)
 // Each input vector is checked against its respective Python golden output.
 //
 // Run (with Vivado XSim):
-// vivado -mode batch -source vivado/scripts/sim_tb_quantizer.tcl
+//   vivado -mode batch -source vivado/scripts/sim_tb_quantizer.tcl
 //
 // Run (with Icarus Verilog, alternative):
-// iverilog -g2012 -I rtl/common -o build/tb_quantizer \
-// tb/common/tb_quantizer.v rtl/common/quantizer.v
-// vvp build/tb_quantizer
+//   iverilog -g2012 -I rtl/common -o build/tb_quantizer \
+//            tb/common/tb_quantizer.v rtl/common/quantizer.v
+//   vvp build/tb_quantizer
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -26,7 +26,7 @@ module tb_quantizer;
 
     // -------------------------------------------------------------------------
     // Parameters MUST match the Python generator (in_width = 27, data_w = 15).
-    // 27 is the width of the 3by3 DW conv core output Sec 5.4.1.1.
+    // 27 is the width of the 3by3 DW conv core output per Thesis Sec 5.4.1.1.
     // -------------------------------------------------------------------------
     localparam integer IN_W      = 27;
     localparam integer OUT_W     = `DATA_W;          // 15
@@ -34,9 +34,9 @@ module tb_quantizer;
 
     // -------------------------------------------------------------------------
     // Vector storage
-    // v_in_sgn : input for signed mode (full range)
-    // v_in_relu : input for relu mode (non-negative only)
-    // v_exp_* : corresponding golden outputs
+    //   v_in_sgn  : input for signed mode (full range)
+    //   v_in_relu : input for relu  mode (non-negative only)
+    //   v_exp_*   : corresponding golden outputs
     // -------------------------------------------------------------------------
     reg signed [IN_W-1:0]  v_in_sgn    [0:MAX_VEC-1];
     reg signed [OUT_W-1:0] v_exp_signed[0:MAX_VEC-1];
@@ -84,7 +84,7 @@ module tb_quantizer;
         dump_count  = 0;
 
         $display("=========================================================");
-        $display("quantizer Self-Checking Testbench");
+        $display("quantizer Self-Checking Testbench (Thesis Sec 5.4.1.1/2)");
         $display("=========================================================");
 
         // Vector file path: allow override via +VECTORS=<path> plusarg.

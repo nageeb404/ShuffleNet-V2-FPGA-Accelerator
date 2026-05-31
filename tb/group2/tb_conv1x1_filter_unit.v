@@ -1,23 +1,23 @@
 // =============================================================================
 // tb_conv1x1_filter_unit.v -- Self-checking testbench for Module 2.4
 // -----------------------------------------------------------------------------
-//
+// Thesis Sec 5.4.1.2
 //
 // Ch 6.2.5 + 6.2.8 update: data=DATA_W=12 (G2_FM_W), weights=W_W=11 (G2_PW_WW),
-// bias=BIAS_WD=13 (G2_BIAS_W), result=OUT_W=12 (G2_FM_W).
-// Vector file must be regenerated in new bit widths.
+//   bias=BIAS_WD=13 (G2_BIAS_W), result=OUT_W=12 (G2_FM_W).
+//   Vector file must be regenerated in new bit widths.
 //
 // Vector file: N_ACC+1 = 8 lines per case
-// Lines 0..6: d0..d28 w0..w28 (58 hex tokens: 29 x DATA_W + 29 x W_W)
-// Line 7: bias expected (BIAS_WD + OUT_W)
+//   Lines 0..6: d0..d28 w0..w28  (58 hex tokens: 29 x DATA_W + 29 x W_W)
+//   Line 7:     bias expected     (BIAS_WD + OUT_W)
 //
 // Pipeline timing (N_ACC=7):
-// negedge 0: drive row0, acc_clr=1
-// negedge 1: drive row1, acc_clr=1
-// negedge 2..5: drive rows 2..5, acc_clr=0
-// negedge 6: drive row6 + bias, acc_clr=0
-// negedge 7: wait
-// negedge 8: CHECK
+//   negedge 0:     drive row0, acc_clr=1
+//   negedge 1:     drive row1, acc_clr=1
+//   negedge 2..5:  drive rows 2..5, acc_clr=0
+//   negedge 6:     drive row6 + bias, acc_clr=0
+//   negedge 7:     wait
+//   negedge 8:     CHECK
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -163,7 +163,7 @@ module tb_conv1x1_filter_unit;
         dut_bias = 0;
 
         $display("=========================================================");
-        $display("conv1x1_filter_unit Testbench");
+        $display("conv1x1_filter_unit Testbench (Thesis Sec 5.4.1.2)");
         $display("Ch 6.2.5+6.2.8: DATA_W=%0d W_W=%0d BIAS_WD=%0d OUT_W=%0d",
                  DATA_W, W_W, BIAS_WD, OUT_W);
         $display("=========================================================");

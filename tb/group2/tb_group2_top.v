@@ -1,12 +1,12 @@
 // =============================================================================
 // tb_group2_top.v -- Structural smoke test for Module 2.11
 // -----------------------------------------------------------------------------
-// "Group 2 Design"
+// Thesis Sec 5.4 "Group 2 Design"
 //
 // Tests:
-// 1. Module elaborates (no unconnected port / hierarchy errors)
-// 2. RST -> IDLE behaviour: after reset, group2_done stays 0
-// 3. start_group triggers FSM (loops counter advances from 0 with done injection)
+//   1. Module elaborates (no unconnected port / hierarchy errors)
+//   2. RST -> IDLE behaviour: after reset, group2_done stays 0
+//   3. start_group triggers FSM (loops counter advances from 0 with done injection)
 //
 // This is a structural connectivity check. Full end-to-end functional
 // verification (with real image data, weights, and golden outputs) is

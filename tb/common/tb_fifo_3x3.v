@@ -1,18 +1,18 @@
 // =============================================================================
 // tb_fifo_3x3.v -- Self-checking testbench for Module 1.5
 // -----------------------------------------------------------------------------
-// / Sec 5.3.3 / Figure 5.13
+// Thesis Sec 5.8.1 / Sec 5.3.3 / Figure 5.13
 //
 // Vector format: one line per clock cycle
-// data_in_hex padding_sel(0/1) shift_and_load(0/1)
-// expected_tap0_hex expected_tap1_hex expected_tap2_hex
+//   data_in_hex  padding_sel(0/1)  shift_and_load(0/1)
+//   expected_tap0_hex  expected_tap1_hex  expected_tap2_hex
 //
 // Pipeline timing (2 negedges per test cycle):
-// negedge A: drive data_in, padding_sel, shift_and_load = v_sal[i]
-// posedge A+: DUT shifts (if sal=1), taps update
-// negedge B: set shift_and_load=0, CHECK taps == expected[i]
-// posedge B+: idle (sal=0 prevents spurious shift)
-// negedge C: = negedge A of next iteration
+//   negedge A: drive data_in, padding_sel, shift_and_load = v_sal[i]
+//   posedge A+: DUT shifts (if sal=1), taps update
+//   negedge B: set shift_and_load=0, CHECK taps == expected[i]
+//   posedge B+: idle (sal=0 prevents spurious shift)
+//   negedge C: = negedge A of next iteration
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -77,7 +77,7 @@ module tb_fifo_3x3;
         dut_data_in        = {DATA_W{1'b0}};
 
         $display("=========================================================");
-        $display("fifo_3x3 Testbench");
+        $display("fifo_3x3 Testbench (Thesis Sec 5.3.3)");
         $display("DEPTH=%0d  TAP_STRIDE=%0d", DEPTH, TAP_STRIDE);
         $display("=========================================================");
 
@@ -143,12 +143,12 @@ module tb_fifo_3x3;
         // Drive-and-check loop.
         //
         // Each iteration: 2 negedge transitions (= 2 clock cycles per check).
-        // negedge A: drive inputs for cycle i (shift_and_load = v_sal[i])
-        // posedge A+1 fires: DUT shifts if sal=1, taps update
-        // negedge B: set shift_and_load=0 first (prevents posedge B+1 from
-        // spuriously shifting), then check taps vs expected[i]
-        // posedge B+1 fires with sal=0: no spurious shift
-        // -- loop advances -- next negedge C = negedge A of iteration i+1
+        //   negedge A: drive inputs for cycle i (shift_and_load = v_sal[i])
+        //              posedge A+1 fires: DUT shifts if sal=1, taps update
+        //   negedge B: set shift_and_load=0 first (prevents posedge B+1 from
+        //              spuriously shifting), then check taps vs expected[i]
+        //              posedge B+1 fires with sal=0: no spurious shift
+        //   -- loop advances -- next negedge C = negedge A of iteration i+1
         // ====================================================================
         for (i = 0; i < n_vectors; i = i + 1) begin
 

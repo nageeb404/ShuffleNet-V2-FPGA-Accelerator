@@ -1,16 +1,16 @@
 // =============================================================================
 // tb_conv1x1_core.v -- Self-checking testbench for Module 2.5
 // -----------------------------------------------------------------------------
-// / Table 5.4
+// Thesis Sec 5.4.1.2 / Table 5.4
 //
 // Ch 6.2.5 + 6.2.8 update: IN_W=12 (data), W_W=11 (weights), BIAS_WD=13,
-// OUT_W=12 (results). Vector file must be regenerated in new bit widths.
+//   OUT_W=12 (results). Vector file must be regenerated in new bit widths.
 //
 // Vector file format per test case (N_ACC=7, N_FILT=58, N_CHAN=29):
-// For k=0..6:
-// 1 line: d0..d28 (29 x IN_W-bit hex tokens)
-// 58 lines: w0..w28 (29 x W_W-bit hex tokens, per-filter)
-// Then 58 lines: bias expected (BIAS_WD + OUT_W, per filter)
+//   For k=0..6:
+//     1 line: d0..d28    (29 x IN_W-bit hex tokens)
+//     58 lines: w0..w28  (29 x W_W-bit hex tokens, per-filter)
+//   Then 58 lines: bias expected  (BIAS_WD + OUT_W, per filter)
 // =============================================================================
 
 `timescale 1ns / 1ps
