@@ -11,11 +11,11 @@ sim_run_tb \
     tb_conv1x1_filter_unit \
     [list \
         [file join $common_dir Adder3.v] \
-        [file join $common_dir adder_tree_29.v] \
+        [file join $common_dir adder_tree_12.v] \
         [file join $common_dir mac_unit.v] \
         [file join $common_dir quantizer.v] \
         [file join $g2_dir    conv1x1_filter_unit.v] \
     ] \
     [file join $tb_dir tb_conv1x1_filter_unit.v] \
-    [file join $tb_dir vectors conv1x1_filter_unit_vectors.hex] \
+    "" \
     [list $common_dir $g2_dir]

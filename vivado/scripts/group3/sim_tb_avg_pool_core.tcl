@@ -10,8 +10,9 @@ set tb_dir     [file join $_proj_root tb  group3]
 sim_run_tb \
     tb_avg_pool_core \
     [list \
+        {*}[glob [file join $common_dir *.v]] \
         [file join $g3_dir avg_pool_core.v] \
     ] \
     [file join $tb_dir tb_avg_pool_core.v] \
-    [file join $tb_dir vectors avg_pool_vectors.hex] \
+    "" \
     [list $common_dir $g3_dir]

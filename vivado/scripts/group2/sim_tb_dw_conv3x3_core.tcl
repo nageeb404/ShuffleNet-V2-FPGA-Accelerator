@@ -18,5 +18,5 @@ sim_run_tb \
         [file join $g2_dir    dw_conv3x3_core.v] \
     ] \
     [file join $tb_dir tb_dw_conv3x3_core.v] \
-    [file join $tb_dir vectors dw_conv3x3_core_vectors.hex] \
+    "" \
     [list $common_dir $g2_dir]

@@ -1,123 +1,120 @@
-// =============================================================================
-// tb_conv1x1_g3_core.v -- Smoke test for Module 3.1 (conv1x1_g3_core)
-// -----------------------------------------------------------------------------
-// Thesis Sec 5.5 / Table 5.9
-//
-// Ch 6.2.5 + 6.2.8 update: IN_W=12 (G2_FM_W), W_W=9 (G3_PW_WW),
-//   BIAS_WD=15, BIAS_OUT_W=27 (G3_CONV_OUT_W).
-//
-// This testbench verifies: compilation, reset, and zero-input -> zero-output.
-// =============================================================================
-
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 `default_nettype none
-
 `include "shufflenet_pkg.vh"
+
+// Self-contained testbench for conv1x1_g3_core (Module 3.1)
+// N_FILT=16, N_CHAN=29 shared d0..d28 inputs, weights_flat, biases_flat.
+// OUT_W=27 (full precision, no quantizer). One-sided output (ReLU applied).
 
 module tb_conv1x1_g3_core;
 
-    localparam integer N_FILT    = `G3_PW_PAR_FILT;  // 16
-    localparam integer N_CHAN    = `G3_PW_PAR_CHAN;   // 29
-    localparam integer IN_W      = `G2_FM_W;           // 12 (Ch 6.2.8)
-    localparam integer W_W       = `G3_PW_WW;          //  9 (Ch 6.2.5)
-    localparam integer BIAS_WD   = `DATA_W;            // 15
-    localparam integer BIAS_OUT_W = `G3_CONV_OUT_W;   // 27 (Ch 6.2.5+6.2.8)
+    localparam N_FILT    = `G3_PW_PAR_FILT;   // 16
+    localparam N_CHAN    = `G3_PW_PAR_CHAN;    // 29
+    localparam IN_W     = `G2_FM_W;            // 12
+    localparam W_W      = `G3_PW_WW;           // 9
+    localparam BIAS_WD  = `DATA_W;             // 15
+    localparam OUT_W    = `G3_CONV_OUT_W;      // 27
+    localparam DROP_LSB = 7;
 
-    reg clk, rst;
-    initial clk = 1'b0;
-    always #5 clk = ~clk;
+    reg clk=0; always #5 clk=~clk;
+    reg rst=1; reg en=0, acc_clr=0;
 
-    reg en, acc_clr;
-    reg signed [IN_W-1:0]       d [0:28];
-    reg  [N_FILT*N_CHAN*W_W-1:0]    weights_flat;
-    reg  [N_FILT*BIAS_WD-1:0]       biases_flat;
-    wire [N_FILT*BIAS_OUT_W-1:0]    results_flat;
+    reg signed [IN_W-1:0] d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,
+                           d15,d16,d17,d18,d19,d20,d21,d22,d23,d24,d25,d26,d27,d28;
+    reg signed [N_FILT*N_CHAN*W_W-1:0] weights_flat;
+    reg signed [N_FILT*BIAS_WD-1:0]   biases_flat;
+    wire signed [N_FILT*OUT_W-1:0]    results_flat;
 
-    conv1x1_g3_core #(
-        .N_FILT     (N_FILT),
-        .N_CHAN     (N_CHAN),
-        .IN_W      (IN_W),
-        .W_W       (W_W),
-        .BIAS_WD   (BIAS_WD),
-        .BIAS_OUT_W(BIAS_OUT_W)
-    ) dut (
-        .clk(clk), .rst(rst), .en(en), .acc_clr(acc_clr),
-        .d0(d[0]),   .d1(d[1]),   .d2(d[2]),   .d3(d[3]),   .d4(d[4]),
-        .d5(d[5]),   .d6(d[6]),   .d7(d[7]),   .d8(d[8]),   .d9(d[9]),
-        .d10(d[10]), .d11(d[11]), .d12(d[12]), .d13(d[13]), .d14(d[14]),
-        .d15(d[15]), .d16(d[16]), .d17(d[17]), .d18(d[18]), .d19(d[19]),
-        .d20(d[20]), .d21(d[21]), .d22(d[22]), .d23(d[23]), .d24(d[24]),
-        .d25(d[25]), .d26(d[26]), .d27(d[27]), .d28(d[28]),
+    conv1x1_g3_core dut(
+        .clk(clk),.rst(rst),.en(en),.acc_clr(acc_clr),
+        .d0(d0),.d1(d1),.d2(d2),.d3(d3),.d4(d4),
+        .d5(d5),.d6(d6),.d7(d7),.d8(d8),.d9(d9),
+        .d10(d10),.d11(d11),.d12(d12),.d13(d13),.d14(d14),
+        .d15(d15),.d16(d16),.d17(d17),.d18(d18),.d19(d19),
+        .d20(d20),.d21(d21),.d22(d22),.d23(d23),.d24(d24),
+        .d25(d25),.d26(d26),.d27(d27),.d28(d28),
         .weights_flat(weights_flat),
-        .biases_flat (biases_flat),
-        .results_flat(results_flat)
-    );
+        .biases_flat(biases_flat),
+        .results_flat(results_flat));
 
-    integer i, pass_count, fail_count;
+    integer pass_cnt=0, fail_cnt=0, total=0, f, c, s, nacc;
+    reg signed [OUT_W-1:0] v0;
 
-    task check;
-        input integer cond;
-        input [8*64-1:0] msg;
+    task do_reset;
+        begin rst=1; en=0; acc_clr=0; weights_flat=0; biases_flat=0;
+              {d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,
+               d15,d16,d17,d18,d19,d20,d21,d22,d23,d24,d25,d26,d27,d28}=0;
+              repeat(4) @(posedge clk); rst=0; @(posedge clk); end
+    endtask
+
+    task chk_nonx;
+        input [255:0] tag;
         begin
-            if (cond) pass_count = pass_count + 1;
-            else begin
-                fail_count = fail_count + 1;
-                $display("FAIL: %0s", msg);
+            for (f=0; f<N_FILT; f=f+1) begin
+                total=total+1;
+                if (^results_flat[f*OUT_W +:OUT_W]===1'bx) begin
+                    $display("FAIL [%0s] f=%0d: X",tag,f); fail_cnt=fail_cnt+1;
+                end else pass_cnt=pass_cnt+1;
             end
         end
     endtask
 
+    task set_data; input signed [IN_W-1:0] v;
+        begin {d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,
+               d15,d16,d17,d18,d19,d20,d21,d22,d23,d24,d25,d26,d27,d28}={29{v}}; end
+    endtask
+
     initial begin
-        pass_count   = 0; fail_count = 0;
-        rst          = 1'b1;
-        en           = 1'b0;
-        acc_clr      = 1'b0;
-        weights_flat = {(N_FILT*N_CHAN*W_W){1'b0}};
-        biases_flat  = {(N_FILT*BIAS_WD){1'b0}};
-        for (i = 0; i < 29; i = i+1) d[i] = {IN_W{1'b0}};
+        $display("=== tb_conv1x1_g3_core ===");
+        do_reset;
 
-        $display("=========================================================");
-        $display("conv1x1_g3_core Testbench (N_FILT=%0d N_CHAN=%0d)", N_FILT, N_CHAN);
-        $display("Ch 6.2.5+6.2.8: IN_W=%0d W_W=%0d BIAS_WD=%0d BIAS_OUT_W=%0d",
-                 IN_W, W_W, BIAS_WD, BIAS_OUT_W);
-        $display("=========================================================");
-
-        // ---- Test 1: all-zero weights/data -> results = 0 after reset ----
-        #20; @(negedge clk); rst = 1'b0;
+        // Case 0: all zeros
+        nacc = 2;
+        set_data(0); weights_flat=0; biases_flat=0;
+        for (s=0; s<=nacc; s=s+1) begin
+            @(negedge clk); en=1; acc_clr=(s<=1)?1'b1:1'b0;
+        end
+        @(negedge clk); en=0; acc_clr=0;
         @(posedge clk); #1;
+        // Check all outputs are 0
+        for (f=0; f<N_FILT; f=f+1) begin
+            total=total+1;
+            if (results_flat[f*OUT_W +:OUT_W]!==0) begin
+                $display("FAIL zero f=%0d got=%0d",f,$signed(results_flat[f*OUT_W+:OUT_W]));
+                fail_cnt=fail_cnt+1;
+            end else pass_cnt=pass_cnt+1;
+        end
+        do_reset;
 
-        check((results_flat === {(N_FILT*BIAS_OUT_W){1'b0}}),
-              "all-zero: results=0 after reset");
-
-        // Run 10 cycles with en=1 acc_clr=1 (all-zero inputs)
-        en = 1'b1; acc_clr = 1'b1;
-        repeat(10) @(posedge clk);
-        #1;
-        check((results_flat === {(N_FILT*BIAS_OUT_W){1'b0}}),
-              "all-zero inputs: results=0 after 10 en cycles");
-
-        // ---- Test 2: Reset restores zero outputs ----
-        @(negedge clk); rst = 1'b1;
-        en = 1'b0; acc_clr = 1'b0;
-        @(negedge clk); rst = 1'b0;
+        // Case 1: positive inputs — check non-X and all same
+        set_data(8); // small positive
+        for (f=0; f<N_FILT; f=f+1)
+            for (c=0; c<N_CHAN; c=c+1)
+                weights_flat[(f*N_CHAN+c)*W_W +:W_W] = 9'sd1;
+        biases_flat = 0;
+        nacc = 2;
+        for (s=0; s<=nacc; s=s+1) begin
+            @(negedge clk); en=1; acc_clr=(s<=1)?1'b1:1'b0;
+        end
+        @(negedge clk); en=0; acc_clr=0;
         @(posedge clk); #1;
-        check((results_flat === {(N_FILT*BIAS_OUT_W){1'b0}}),
-              "results=0 after second reset");
+        chk_nonx("positive");
+        // All 16 filters should produce same value
+        v0 = results_flat[0 +:OUT_W];
+        for (f=1; f<N_FILT; f=f+1) begin
+            total=total+1;
+            if (results_flat[f*OUT_W +:OUT_W]!==v0) begin
+                $display("FAIL uniform f=%0d differs",f); fail_cnt=fail_cnt+1;
+            end else pass_cnt=pass_cnt+1;
+        end
 
-        // ---- Summary ----
         $display("---------------------------------------------------------");
-        $display("Tested %0d checks", pass_count + fail_count);
-        $display("PASS: %0d / %0d", pass_count, pass_count + fail_count);
-        $display("FAIL: %0d / %0d", fail_count, pass_count + fail_count);
-        if (fail_count == 0) $display("RESULT: *** ALL TESTS PASSED ***");
-        else                 $display("RESULT: *** %0d TESTS FAILED ***", fail_count);
+        $display("PASS: %0d / %0d", pass_cnt, total);
+        $display("FAIL: %0d / %0d", fail_cnt, total);
+        if (fail_cnt==0) $display("RESULT: *** ALL TESTS PASSED ***");
+        else             $display("RESULT: *** %0d TESTS FAILED ***", fail_cnt);
         $display("=========================================================");
         $finish;
     end
-
 endmodule
-
 `default_nettype wire
-// =============================================================================
-// END tb_conv1x1_g3_core.v
-// =============================================================================

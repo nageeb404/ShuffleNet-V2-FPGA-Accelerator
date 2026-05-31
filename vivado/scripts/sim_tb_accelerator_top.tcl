@@ -9,6 +9,17 @@ set g2_dir     [file join $_proj_root rtl group2]
 set g3_dir     [file join $_proj_root rtl group3]
 set rtl_dir    [file join $_proj_root rtl]
 set tb_dir     [file join $_proj_root tb]
+# Copy hex weight files so $readmemh finds them
+set _g2hex [file join $_proj_root rtl group2 weights]
+set _g3hex [file join $_proj_root rtl group3 weights]
+set _worka [file join $_proj_root vivado work tb_accelerator_top]
+file mkdir $_worka
+foreach _hf {g2_dw_weights.hex g2_dw_biases.hex g2_pw_weights.hex g2_pw_biases.hex} {
+    catch {file copy -force [file join $_g2hex $_hf] $_worka}
+}
+foreach _hf {g3_pw_weights.hex g3_pw_biases.hex g3_fc_weights.hex g3_fc_biases.hex} {
+    catch {file copy -force [file join $_g3hex $_hf] $_worka}
+}
 
 sim_run_tb \
     tb_accelerator_top \
@@ -17,6 +28,7 @@ sim_run_tb \
         [file join $common_dir quantizer.v] \
         [file join $common_dir mac_unit.v] \
         [file join $common_dir adder_tree_9.v] \
+        [file join $common_dir adder_tree_12.v] \
         [file join $common_dir adder_tree_29.v] \
         [file join $common_dir adder_tree_32.v] \
         [file join $common_dir fifo_3x3.v] \
@@ -40,8 +52,18 @@ sim_run_tb \
         [file join $g2_dir dw_conv3x3_ctrl.v] \
         [file join $g2_dir conv1x1_ctrl.v] \
         [file join $g2_dir group2_ctrl.v] \
+        [file join $g2_dir g2_dw_weight_rom.v] \
+        [file join $g2_dir g2_dw_bias_rom.v] \
+        [file join $g2_dir g2_pw_weight_rom.v] \
+        [file join $g2_dir g2_pw_bias_rom.v] \
         [file join $g2_dir group2_top.v] \
+        [file join $g3_dir conv1x1_g3_filter_unit.v] \
         [file join $g3_dir conv1x1_g3_core.v] \
+        [file join $g3_dir g3_pw_weight_rom.v] \
+        [file join $g3_dir g3_pw_bias_rom.v] \
+        [file join $g3_dir g3_fc_weight_rom.v] \
+        [file join $g3_dir g3_fc_bias_rom.v] \
+        [file join $_proj_root rtl memories extra_mem.v] \
         [file join $g3_dir avg_pool_core.v] \
         [file join $g3_dir fc_filter_unit.v] \
         [file join $g3_dir fc_core.v] \

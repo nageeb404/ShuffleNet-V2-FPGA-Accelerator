@@ -15,8 +15,7 @@ sim_run_tb \
         [file join $common_dir quantizer.v] \
         [file join $common_dir mac_unit.v] \
         [file join $common_dir adder_tree_29.v] \
-        [file join $g2_dir conv1x1_filter_unit.v] \
-        [file join $g2_dir conv1x1_core.v] \
+        [file join $g3_dir conv1x1_g3_filter_unit.v] \
         [file join $g3_dir conv1x1_g3_core.v] \
     ] \
     [file join $tb_dir tb_conv1x1_g3_core.v] \

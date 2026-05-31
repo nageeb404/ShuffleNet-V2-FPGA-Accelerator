@@ -13,5 +13,5 @@ sim_run_tb \
         [file join $g2_dir group2_fifo.v] \
     ] \
     [file join $tb_dir tb_group2_fifo.v] \
-    [file join $tb_dir vectors group2_fifo_vectors.hex] \
+    "" \
     [list $common_dir $g2_dir]
