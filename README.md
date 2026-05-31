@@ -187,120 +187,196 @@ All arithmetic uses signed fixed-point representation. The baseline format is **
 ```
 shufflenet_v2_fpga/
 │
-├── rtl/                              RTL Verilog source
-│   ├── common/                       Shared arithmetic primitives
-│   │   ├── shufflenet_pkg.vh         Central parameter file
-│   │   ├── mac_unit.v                Pipelined signed multiplier-accumulator
-│   │   ├── adder_tree_9.v            9-input carry-save adder tree
-│   │   ├── adder_tree_12.v           12-input adder tree
-│   │   ├── adder_tree_29.v           29-input adder tree
-│   │   ├── adder_tree_32.v           32-input adder tree
-│   │   ├── quantizer.v               Saturating fixed-point quantizer
-│   │   ├── fifo_3x3.v                3-row sliding window FIFO
-│   │   └── fifo_ctrl.v               FIFO controller FSM
+├── README.md
+├── .gitignore
+│
+├── docs/
+│   ├── system_diagram.png                 System-level block diagram (PS + PL)
+│   └── accelerator_diagram.png            Accelerator internal dataflow
+│
+├── rtl/                                   RTL Verilog source
+│   ├── common/
+│   │   ├── shufflenet_pkg.vh              Central parameter file
+│   │   ├── mac_unit.v                     Pipelined signed multiplier-accumulator
+│   │   ├── Adder3.v                       3-input carry-save adder cell
+│   │   ├── adder_tree_9.v                 9-input adder tree  (Group 1)
+│   │   ├── adder_tree_12.v                12-input adder tree (Group 2 PW)
+│   │   ├── adder_tree_29.v                29-input adder tree (Group 3 PW)
+│   │   ├── adder_tree_32.v                32-input adder tree (Group 3 FC)
+│   │   ├── quantizer.v                    Saturating fixed-point quantizer
+│   │   ├── fifo_3x3.v                     3-row sliding window FIFO
+│   │   └── fifo_ctrl.v                    FIFO controller FSM
 │   │
-│   ├── group1/                       Group 1: 3×3 Conv + MaxPool
-│   │   ├── photo_mem.v               Ping-pong image BRAM (224×224×3)
-│   │   ├── conv3x3_core.v            24-filter parallel convolution core
-│   │   ├── conv3x3_filter_unit.v     Single 3×3 filter unit
-│   │   ├── weights_rom_3x3.v         3×3 weight ROM (distributed)
-│   │   ├── bias_rom_3x3.v            Convolution bias ROM
-│   │   ├── maxpool_core.v            3×3 max pooling, 24 channels parallel
-│   │   ├── maxpool_mem.v             56×56×24 output BRAM
-│   │   ├── fifo_pool.v               MaxPool sliding window FIFO
-│   │   ├── group1_ctrl.v             Group 1 sequencer FSM
-│   │   └── group1_top.v              Group 1 integration
+│   ├── group1/                            3×3 Conv + MaxPool
+│   │   ├── photo_mem.v                    Ping-pong image BRAM (224×224×3, 8-bit)
+│   │   ├── conv3x3_core.v                 24-filter parallel 3×3 conv core
+│   │   ├── conv3x3_filter_unit.v          Single 3×3 filter (9 MACs)
+│   │   ├── weights_rom_3x3.v              3×3 weight ROM (distributed LUT)
+│   │   ├── weights_rom_3x3_init.vh        Weight initialisation header
+│   │   ├── bias_rom_3x3.v                 Conv bias ROM
+│   │   ├── bias_rom_3x3_init.vh           Bias initialisation header
+│   │   ├── maxpool_core.v                 3×3 max-of-9, 24 channels parallel
+│   │   ├── maxpool_mem.v                  56×56×24 output feature map BRAM
+│   │   ├── fifo_pool.v                    MaxPool sliding window FIFO
+│   │   ├── group1_ctrl.v                  Group 1 sequencer FSM
+│   │   ├── group1_top.v                   Group 1 top-level integration
+│   │   └── group1_top_bb.v                Black-box stub (split synthesis flow)
 │   │
-│   ├── group2/                       Group 2: 16 Shuffle Blocks
-│   │   ├── dw_conv3x3_core.v         58-filter depthwise convolution core
-│   │   ├── dw_conv3x3_filter_unit.v  Single DW filter unit
-│   │   ├── dw_conv3x3_ctrl.v         Depthwise sequencer FSM
-│   │   ├── conv1x1_core.v            58-filter pointwise convolution core
-│   │   ├── conv1x1_filter_unit.v     Single PW filter unit (12 channels)
-│   │   ├── conv1x1_ctrl.v            Pointwise sequencer FSM
-│   │   ├── group2_fifo.v             Sliding window FIFO bank
-│   │   ├── group2_fifo_ctrl.v        FIFO bank controller
-│   │   ├── g2_dw_weight_rom.v        DW weight ROM (distributed)
-│   │   ├── g2_dw_bias_rom.v          DW bias ROM (packed format)
-│   │   ├── g2_pw_weight_rom.v        PW weight ROM (distributed)
-│   │   ├── g2_pw_bias_rom.v          PW bias ROM (packed format)
-│   │   ├── group2_ctrl.v             Group 2 top-level sequencer
-│   │   ├── group2_top.v              Group 2 integration
-│   │   └── weights/                  Hex ROM initialization files
+│   ├── group2/                            16 Shuffle Blocks (DW 3×3 + PW 1×1)
+│   │   ├── dw_conv3x3_core.v              58-filter depthwise 3×3 conv core
+│   │   ├── dw_conv3x3_filter_unit.v       Single DW filter (9 MACs)
+│   │   ├── dw_conv3x3_ctrl.v              Depthwise sequencer FSM
+│   │   ├── conv1x1_core.v                 58-filter pointwise conv (12-ch parallel)
+│   │   ├── conv1x1_filter_unit.v          Single PW filter (12 MACs)
+│   │   ├── conv1x1_ctrl.v                 Pointwise accumulation sequencer
+│   │   ├── group2_fifo.v                  Variable-width 3×3 sliding window FIFO
+│   │   ├── group2_fifo_ctrl.v             FIFO controller (5-state FSM)
+│   │   ├── g2_dw_weight_rom.v             DW weight ROM (distributed)
+│   │   ├── g2_dw_bias_rom.v               DW bias ROM (packed, all 58 biases/entry)
+│   │   ├── g2_pw_weight_rom.v             PW weight ROM (distributed)
+│   │   ├── g2_pw_bias_rom.v               PW bias ROM (packed format)
+│   │   ├── group2_ctrl.v                  Group 2 top-level sequencer
+│   │   ├── group2_top.v                   Group 2 integration (DW+PW+ROMs+buffer)
+│   │   ├── group2_top_bb.v                Black-box stub (split synthesis flow)
+│   │   └── weights/                       BN-folded hex weight files
+│   │       ├── g2_dw_weights.hex
+│   │       ├── g2_dw_biases.hex
+│   │       ├── g2_pw_weights.hex
+│   │       └── g2_pw_biases.hex
 │   │
-│   ├── group3/                       Group 3: PW Conv + AvgPool + FC
-│   │   ├── conv1x1_g3_core.v         Group 3 pointwise convolution core
-│   │   ├── conv1x1_g3_filter_unit.v  Single G3 PW filter unit
-│   │   ├── avg_pool_core.v           7×7 global average pooling
-│   │   ├── fc_core.v                 Fully connected layer (1024 → 1000)
-│   │   ├── fc_filter_unit.v          Single FC neuron unit
-│   │   ├── g3_pw_weight_rom.v        PW weight ROM (BRAM)
-│   │   ├── g3_pw_bias_rom.v          PW bias ROM (packed format)
-│   │   ├── g3_fc_weight_rom.v        FC weight ROM (BRAM)
-│   │   ├── g3_fc_bias_rom.v          FC bias ROM
-│   │   ├── group3_ctrl.v             Group 3 sequencer FSM
-│   │   ├── group3_top.v              Group 3 integration
-│   │   └── weights/                  Hex ROM initialization files
+│   ├── group3/                            PW Conv + AvgPool + FC + Argmax
+│   │   ├── conv1x1_g3_core.v              16-filter G3 PW conv (29-ch, 27-bit out)
+│   │   ├── conv1x1_g3_filter_unit.v       Single G3 PW filter unit
+│   │   ├── avg_pool_core.v                7×7 global average pooling (16-ch)
+│   │   ├── fc_core.v                      FC layer: 1024 in, 1000 out, 32-ch parallel
+│   │   ├── fc_filter_unit.v               Single FC neuron (32 MACs + >>2 shift)
+│   │   ├── fc_core_stub.v                 Synthesis stub (excluded from build)
+│   │   ├── g3_pw_weight_rom.v             G3 PW weight ROM (BRAM)
+│   │   ├── g3_pw_bias_rom.v               G3 PW bias ROM (packed)
+│   │   ├── g3_fc_weight_rom.v             FC weight ROM (BRAM, 32K entries)
+│   │   ├── g3_fc_bias_rom.v               FC bias ROM (1000 entries)
+│   │   ├── group3_ctrl.v                  Group 3 sequencer (10-counter FSM)
+│   │   ├── group3_top.v                   Group 3 integration
+│   │   ├── group3_top_bb.v                Black-box stub (split synthesis flow)
+│   │   └── weights/                       BN-folded hex weight files
+│   │       ├── g3_pw_weights.hex
+│   │       ├── g3_pw_biases.hex
+│   │       ├── g3_fc_weights.hex
+│   │       └── g3_fc_biases.hex
 │   │
 │   ├── memories/
-│   │   └── extra_mem.v               Group 2 → Group 3 feature map buffer
+│   │   ├── extra_mem.v                    G2→G3 feature buffer (29-ch × 1024 × 12-bit)
+│   │   ├── xleft_mem.v                    (superseded — not instantiated)
+│   │   └── xright_mem.v                   (superseded — not instantiated)
 │   │
 │   ├── axi/
-│   │   └── axi_photo_mem_slave.v     AXI4-Lite slave (pixel writes + CSR)
+│   │   └── axi_photo_mem_slave.v          AXI4-Lite slave: pixel write + CSR
 │   │
-│   ├── accelerator_top.v             Full accelerator integration
-│   └── shufflenet_board_top.v        Board wrapper (MMCM, reset sync, AXI)
+│   ├── accelerator_ctrl.v                 5-state pipelined FSM (G1/G2/G3 flow)
+│   ├── accelerator_top.v                  Full accelerator integration
+│   └── shufflenet_board_top.v             Board wrapper: MMCM, reset sync, AXI
 │
-├── tb/                               Verilog testbenches
-│   ├── common/                       Primitive-level testbenches
-│   ├── group1/                       Group 1 testbenches
-│   ├── group2/                       Group 2 testbenches
-│   ├── group3/                       Group 3 testbenches
+├── tb/                                    Self-contained Verilog testbenches (48 total, all pass)
+│   ├── common/                            Common primitive testbenches + vectors
+│   │   ├── tb_Adder3.v
+│   │   ├── tb_adder_tree_9/12/29/32.v
+│   │   ├── tb_mac_unit.v
+│   │   ├── tb_quantizer.v
+│   │   ├── tb_fifo_3x3.v
+│   │   ├── tb_fifo_ctrl.v
+│   │   └── vectors/  (reference .hex test vectors)
+│   │
+│   ├── group1/                            Group 1 testbenches + vectors
+│   │   ├── tb_conv3x3_filter_unit.v
+│   │   ├── tb_conv3x3_core.v
+│   │   ├── tb_maxpool_core.v
+│   │   ├── tb_photo_mem.v
+│   │   ├── tb_weights_rom_3x3.v
+│   │   ├── tb_bias_rom_3x3.v
+│   │   ├── tb_maxpool_mem.v
+│   │   ├── tb_fifo_pool.v
+│   │   ├── tb_group1_ctrl.v
+│   │   ├── tb_group1_top.v
+│   │   └── vectors/
+│   │
+│   ├── group2/                            Group 2 testbenches + vectors
+│   │   ├── tb_conv1x1_ctrl/core/filter_unit.v
+│   │   ├── tb_dw_conv3x3_ctrl/core/filter_unit.v
+│   │   ├── tb_g2_dw/pw_weight/bias_rom.v
+│   │   ├── tb_group2_ctrl/fifo/fifo_ctrl/top.v
+│   │   └── vectors/
+│   │
+│   ├── group3/                            Group 3 testbenches + vectors
+│   │   ├── tb_avg_pool_core.v
+│   │   ├── tb_conv1x1_g3_core/filter_unit.v
+│   │   ├── tb_fc_core/filter_unit.v
+│   │   ├── tb_g3_pw/fc_weight/bias_rom.v
+│   │   ├── tb_group3_ctrl/top.v
+│   │   └── vectors/
+│   │
+│   ├── memories/
+│   │   └── tb_extra_mem.v
+│   │
+│   ├── axi/
+│   │   └── tb_axi_photo_mem_slave.v
+│   │
 │   ├── tb_accelerator_ctrl.v
 │   └── tb_accelerator_top.v
 │
-├── docs/                             Architecture diagrams and reports
-│   ├── system_diagram.png            System-level block diagram (PS + PL)
-│   └── accelerator_diagram.png       Accelerator internal dataflow diagram
-│
-├── scripts/                          Python model utilities and vector generators
-│   ├── shufflenet_q68.py             Bit-accurate Q6.8 software model
-│   ├── verify_accuracy.py            BN-folding verification script
-│   ├── common/                       Primitive test vector generators
-│   ├── group1/                       Group 1 weight extractor + vector generators
+├── scripts/                               Python model utilities
+│   ├── shufflenet_q68.py                  Bit-accurate Q6.8 forward-pass model
+│   ├── verify_accuracy.py                 BN-folding + accuracy verification
+│   ├── common/                            Vector generators for common primitives
+│   ├── group1/                            G1 weight extractor + vector generators
 │   ├── group2/
-│   │   └── extract_weights_g2_g3.py  BN-folded hex files for G2 and G3 ROMs
-│   └── group3/                       Group 3 vector generators
+│   │   └── extract_weights_g2_g3.py       BN-folded weights → hex ROM files
+│   └── group3/                            G3 vector generators
 │
-│   (Synthesis scripts → vivado/scripts/ and vivado/work/)
-│   (Constraint file  → vivado/constraints/shufflenet.xdc)
-│   (Timing reports   → vivado/reports/)
-│
-├── hls/                              Vitis HLS C++ reference models
+├── hls/                                   Vitis HLS C++ reference models (ZU19EG target)
 │   ├── src/
-│   │   ├── shufflenet_hls.h          Common header
-│   │   ├── shufflenet_hls.cpp        Model 2: pipelined
-│   │   ├── shufflenet_hls_parallelism.cpp   Model 3: loop unrolling
-│   │   └── shufflenet_hls_final.cpp         Model 4: combined
+│   │   ├── shufflenet_hls.h               Shared header
+│   │   ├── shufflenet_hls.cpp             Model 2: pipelined baseline
+│   │   ├── shufflenet_hls_parallelism.cpp Model 3: loop unrolling + partition
+│   │   └── shufflenet_hls_final.cpp       Model 4: combined optimizations
 │   ├── tb/
-│   │   └── tb_shufflenet.cpp         HLS testbench
-│   ├── weights/                      Weight header files for HLS
-│   └── scripts/                      TCL project creation scripts
+│   │   └── tb_shufflenet.cpp              C-simulation testbench
+│   ├── weights/                           Weight headers (block_s*.h, conv*.h, fc*.h)
+│   └── scripts/
+│       ├── create_hls_project.tcl         Model 2 project
+│       ├── create_parallelism_project.tcl Model 3 project
+│       ├── create_final_project.tcl       Model 4 project
+│       └── run_csynth.tcl                 C synthesis runner
 │
-├── vivado/
+├── vivado/                                Vivado project and scripts
 │   ├── constraints/
-│   │   └── shufflenet.xdc            Timing constraints
-│   ├── scripts/
-│   │   ├── build_project.tcl         Block design creation script
-│   │   ├── run_all.tcl               Run all module simulations
-│   │   └── (per-module sim scripts)
-│   └── work/
-│       ├── launch_synth.bat          Synthesis launch script
-│       └── run_synth_impl.tcl        Synth → impl → bitstream TCL flow
+│   │   └── shufflenet.xdc                 Timing constraints (100 MHz clock)
+│   │
+│   ├── reports/
+│   │   ├── impl_timing.rpt                Post-impl timing (WNS = +0.125 ns)
+│   │   └── impl_utilization.rpt           Post-impl resource usage
+│   │
+│   ├── scripts/                           Simulation and build scripts
+│   │   ├── sim_common.tcl                 Shared XSim helper proc
+│   │   ├── build_project.tcl              Block design + project creation
+│   │   ├── run_synth_impl.tcl             Full synth+impl+bitstream (alternative flow)
+│   │   ├── sim_tb_accelerator_ctrl.tcl
+│   │   ├── sim_tb_accelerator_top.tcl
+│   │   ├── common/   sim_tb_*.tcl         Common primitive simulations (9 scripts)
+│   │   ├── group1/   sim_tb_*.tcl         Group 1 simulations (10 scripts)
+│   │   ├── group2/   sim_tb_*.tcl         Group 2 simulations (14 scripts)
+│   │   ├── group3/   sim_tb_*.tcl         Group 3 simulations (11 scripts)
+│   │   ├── memories/ sim_tb_extra_mem.tcl
+│   │   └── axi/      sim_tb_axi_photo_mem_slave.tcl
+│   │
+│   └── work/                              Split synthesis scripts (run in sequence)
+│       ├── part0_synth_g1_ooc.tcl         G1 OOC synthesis  → dcp/group1_top.dcp
+│       ├── part1_synth_g2_ooc.tcl         G2 OOC synthesis  → dcp/group2_top.dcp
+│       ├── part2_synth_g3_ooc.tcl         G3 OOC synthesis  → dcp/group3_top.dcp
+│       └── part3_synth_and_impl.tcl       Project synth + fill DCPs + P&R + bitstream
 │
-└── sw/                               PS-side software
-    ├── shufflenet_test.c             Linux test application (/dev/mem + mmap)
-    └── gen_test_image.py             Image preprocessing utility
+└── sw/                                    PS-side Linux software
+    ├── shufflenet_test.c                  Test app: load image → AXI → poll → result
+    └── gen_test_image.py                  Converts JPEG/PNG → 224×224×3 raw binary
 ```
 
 ---
