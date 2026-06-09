@@ -276,14 +276,14 @@ static void conv1x1_f116(
         for (int ow = 0; ow < W; ow++) {
             data_t in_pix[116];
             for (int ic = 0; ic < 116; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                 in_pix[ic] = in_flat[ic * H * W + oh * W + ow];
             }
             for (int oc = 0; oc < 116; oc++) {
 #pragma HLS PIPELINE
                 acc_t acc = 0;
                 for (int ic = 0; ic < 116; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                     acc += (acc_t)in_pix[ic] * (acc_t)w[oc * 116 + ic];
                 }
                 data_t val = q_norm(acc, b[oc]);
@@ -307,14 +307,14 @@ static void conv1x1_f232(
         for (int ow = 0; ow < W; ow++) {
             data_t in_pix[232];
             for (int ic = 0; ic < 232; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                 in_pix[ic] = in_flat[ic * H * W + oh * W + ow];
             }
             for (int oc = 0; oc < 232; oc++) {
 #pragma HLS PIPELINE
                 acc_t acc = 0;
                 for (int ic = 0; ic < 232; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                     acc += (acc_t)in_pix[ic] * (acc_t)w[oc * 232 + ic];
                 }
                 data_t val = q_norm(acc, b[oc]);
@@ -514,12 +514,12 @@ static void shuffle_block_s2_par(
                 for (int ow = 0; ow < IN_W; ow++) {
                     data_t in_pix[116];
                     for (int ic = 0; ic < 116; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                         in_pix[ic] = b2_in[ic * hw_in + oh * IN_W + ow];
                     }
                     acc_t acc = 0;
                     for (int ic = 0; ic < 116; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                         acc += (acc_t)in_pix[ic] * (acc_t)b2_pw1_w[oc * 116 + ic];
                     }
                     data_t val = q_norm(acc, b2_pw1_b[oc]);
@@ -535,12 +535,12 @@ static void shuffle_block_s2_par(
                 for (int ow = 0; ow < IN_W; ow++) {
                     data_t in_pix[232];
                     for (int ic = 0; ic < 232; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                         in_pix[ic] = b2_in[ic * hw_in + oh * IN_W + ow];
                     }
                     acc_t acc = 0;
                     for (int ic = 0; ic < 232; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                         acc += (acc_t)in_pix[ic] * (acc_t)b2_pw1_w[oc * 232 + ic];
                     }
                     data_t val = q_norm(acc, b2_pw1_b[oc]);
@@ -605,14 +605,14 @@ static void conv5_avgpool_par(data_t sm_in[], data_t sm_out[])
         for (int ow = 0; ow < CONV5_W; ow++) {
             data_t in_pix[CONV5_IN_C];
             for (int ic = 0; ic < CONV5_IN_C; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                 in_pix[ic] = c5_in[ic * CONV5_H * CONV5_W + oh * CONV5_W + ow];
             }
             for (int oc = 0; oc < CONV5_OUT_C; oc++) {
 #pragma HLS PIPELINE
                 acc_t acc = 0;
                 for (int ic = 0; ic < CONV5_IN_C; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                     acc += (acc_t)in_pix[ic] * (acc_t)conv5_w[oc * CONV5_IN_C + ic];
                 }
                 data_t val = q_norm(acc, conv5_b[oc]);
@@ -654,16 +654,16 @@ static void fc_classify_par(data_t sm4[SM4_SIZE], int* class_out)
 
     for (int oc = 0; oc < FC_OUT; oc++) {
 #pragma HLS PIPELINE
-        /* Multiply: UNROLL factor 256 -> 256 DSPs, 4 iterations */
+        /* Multiply: UNROLL factor 8 (reduced from 256 to prevent scheduler OOM) */
         acc_t prods[FC_IN];
         for (int ic = 0; ic < FC_IN; ic++) {
-#pragma HLS UNROLL factor=256
+#pragma HLS UNROLL factor=8
             prods[ic] = (acc_t)sm4[ic] * (acc_t)fc_w[oc * FC_IN + ic];
         }
-        /* Accumulate: fully UNROLL -> reduction tree in 1 cycle */
+        /* Accumulate: UNROLL factor 8 (reduced from full-UNROLL on 1024-wide loop) */
         acc_t acc = 0;
         for (int ic = 0; ic < FC_IN; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=8
             acc += prods[ic];
         }
         data_t val = q_norm(acc, fc_b[oc]);

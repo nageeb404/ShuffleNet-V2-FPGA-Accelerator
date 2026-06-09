@@ -341,11 +341,13 @@ shufflenet_v2_fpga/
 │   ├── tb/
 │   │   └── tb_shufflenet.cpp              C-simulation testbench
 │   ├── weights/                           Weight headers (block_s*.h, conv*.h, fc*.h)
+│   ├── MODEL4_FINAL_SYNTHESIS_RESULTS.md  Achieved numbers, 3 UNROLL bugs, P&R feasibility
 │   └── scripts/
 │       ├── create_hls_project.tcl         Model 2 project
 │       ├── create_parallelism_project.tcl Model 3 project
 │       ├── create_final_project.tcl       Model 4 project
-│       └── run_csynth.tcl                 C synthesis runner
+│       ├── run_csynth.tcl                 C synthesis runner
+│       └── export_final_ip.tcl            Model 4 RTL/IP export probe (P&R feasibility)
 │
 ├── vivado/                                Vivado project and scripts
 │   ├── constraints/
@@ -686,6 +688,27 @@ vitis_hls -f hls/scripts/create_parallelism_project.tcl
 vitis_hls -f hls/scripts/create_final_project.tcl
 ```
 
+### HLS C-Synthesis Results (achieved)
+
+Models 3 and 4 use **ZU19EG** (`xczu19eg-ffvc1760-1-i`). Model 2 uses Kintex-7 (`xc7k160t`). All numbers are Vitis HLS pre-implementation estimates, not post-Vivado-P&R.
+
+| Model | Device | Clock Target | Clock Achieved (est.) | Latency (cycles) | Latency (abs.) |
+|---|---|---|---|---|---|
+| 2 — Pipelined    | Kintex-7 K160T | 10.00 ns (100 MHz) | 7.103 ns (~141 MHz) | 150,443,669 | 1.504 s (~0.7 fps) |
+| 3 — Parallelism  | ZU19EG         | 10.00 ns (100 MHz) | 7.278 ns (~137 MHz) |  22,131,250 | 0.221 s (~4.5 fps) |
+| 4 — Combined     | ZU19EG         |  7.00 ns (143 MHz) | 5.106 ns (~196 MHz) |  21,815,375 | 0.153 s (~6.5 fps) |
+
+Resource utilization (HLS pre-implementation estimate, ZU19EG has 1,968 BRAM_18K / 1,968 DSP / 522,720 LUT / 1,045,440 FF):
+
+| Model | BRAM_18K | DSP | LUT | FF |
+|---|---|---|---|---|
+| 3 — Parallelism | 5,218 (265%) | 5,711 (290%) | 443,752 (85%) | 250,391 (24%) |
+| 4 — Combined    | 5,075 (257%) | 6,636 (337%) | 538,711 (103%) | 280,881 (26%) |
+
+> HLS pre-implementation estimates over-report resources significantly. The same pattern appeared on Model 2 (BRAM at 434% of Kintex-7 capacity in HLS), yet the thesis post-P&R result achieved 99% on Virtex-7 — Vivado synthesis and implementation apply resource sharing and binding not visible at the C-synthesis stage.
+>
+> Three combinatorial-explosion bugs (full `#pragma HLS UNROLL` on 116/232/464-wide loops) were found and fixed — `factor=4` on all wide loops, `factor=8` on the 1024-wide FC loop. Full details: [`hls/MODEL4_FINAL_SYNTHESIS_RESULTS.md`](hls/MODEL4_FINAL_SYNTHESIS_RESULTS.md)
+
 ---
 
 ## Design Optimizations
@@ -736,9 +759,16 @@ Eight RTL optimizations were applied over the baseline 15-bit uniform datapath t
 
 ### RTL vs HLS Comparison
 
-| Metric         | RTL (this work) | HLS Model 2 — Pipelined |
-|----------------|-----------------|-------------------------|
-| Target clock   | 100 MHz         | 100 MHz                 |
-| Frame rate     | TBD             | TBD                     |
-| Power          | TBD             | TBD                     |
-| Energy / frame | TBD             | TBD                     |
+| Metric                     | RTL (this work)          | HLS M2 — Pipelined     | HLS M3 — Parallelism   | HLS M4 — Combined      |
+|----------------------------|--------------------------|------------------------|------------------------|------------------------|
+| Target clock               | 100 MHz                  | 100 MHz                | 100 MHz                | 143 MHz                |
+| Clock achieved             | 100 MHz (WNS +0.125 ns)  | ~141 MHz (est.)        | ~137 MHz (est.)        | ~196 MHz (est.)        |
+| Latency (cycles)           | TBD (post-P&R)           | 150,443,669            | 22,131,250             | 21,815,375             |
+| Latency (abs.)             | TBD                      | 1.504 s/frame          | 0.221 s/frame          | 0.153 s/frame          |
+| Frame rate                 | TBD                      | ~0.7 fps               | ~4.5 fps               | ~6.5 fps               |
+| DSP (post-impl / est.)     | 1,550 / 1,968 (79%)      | —                      | 5,711 est. (290%)      | 6,636 est. (337%)      |
+| BRAM (post-impl / est.)    | 550.5 tiles / 984 (56%)  | —                      | 5,218 est. (265%)      | 5,075 est. (257%)      |
+| Power                      | TBD                      | TBD                    | TBD                    | TBD                    |
+| Energy / frame             | TBD                      | TBD                    | TBD                    | TBD                    |
+
+*HLS resource estimates are pre-implementation (HLS C-synthesis stage) and over-report due to missing Vivado resource sharing.*

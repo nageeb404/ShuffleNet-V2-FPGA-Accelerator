@@ -345,14 +345,14 @@ static void conv1x1_f116_fin(
         for (int ow = 0; ow < W; ow++) {
             data_t in_pix[116];
             for (int ic = 0; ic < 116; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                 in_pix[ic] = in_flat[ic * H * W + oh * W + ow];
             }
             for (int oc = 0; oc < 116; oc++) {
 #pragma HLS PIPELINE
                 acc_t acc = 0;
                 for (int ic = 0; ic < 116; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                     acc += (acc_t)in_pix[ic] * (acc_t)w[oc * 116 + ic];
                 }
                 data_t val = q_norm12(acc, b[oc]);
@@ -374,14 +374,14 @@ static void conv1x1_f232_fin(
         for (int ow = 0; ow < W; ow++) {
             data_t in_pix[232];
             for (int ic = 0; ic < 232; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                 in_pix[ic] = in_flat[ic * H * W + oh * W + ow];
             }
             for (int oc = 0; oc < 232; oc++) {
 #pragma HLS PIPELINE
                 acc_t acc = 0;
                 for (int ic = 0; ic < 232; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                     acc += (acc_t)in_pix[ic] * (acc_t)w[oc * 232 + ic];
                 }
                 data_t val = q_norm12(acc, b[oc]);
@@ -571,12 +571,12 @@ static void shuffle_block_s2_fin(
                 for (int ow = 0; ow < IN_W; ow++) {
                     data_t in_pix[116];
                     for (int ic = 0; ic < 116; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                         in_pix[ic] = b2_in[ic * hw_in + oh * IN_W + ow];
                     }
                     acc_t acc = 0;
                     for (int ic = 0; ic < 116; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                         acc += (acc_t)in_pix[ic] * (acc_t)b2_pw1_w[oc * 116 + ic];
                     }
                     data_t val = q_norm12(acc, b2_pw1_b[oc]);
@@ -592,12 +592,12 @@ static void shuffle_block_s2_fin(
                 for (int ow = 0; ow < IN_W; ow++) {
                     data_t in_pix[232];
                     for (int ic = 0; ic < 232; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                         in_pix[ic] = b2_in[ic * hw_in + oh * IN_W + ow];
                     }
                     acc_t acc = 0;
                     for (int ic = 0; ic < 232; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                         acc += (acc_t)in_pix[ic] * (acc_t)b2_pw1_w[oc * 232 + ic];
                     }
                     data_t val = q_norm12(acc, b2_pw1_b[oc]);
@@ -661,14 +661,14 @@ static void conv5_avgpool_final(data_t sm_in[], data_t sm_out[])
         for (int ow = 0; ow < CONV5_W; ow++) {
             data_t in_pix[CONV5_IN_C];
             for (int ic = 0; ic < CONV5_IN_C; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                 in_pix[ic] = c5_in[ic * CONV5_H * CONV5_W + oh * CONV5_W + ow];
             }
             for (int oc = 0; oc < CONV5_OUT_C; oc++) {
 #pragma HLS PIPELINE
                 acc_t acc = 0;
                 for (int ic = 0; ic < CONV5_IN_C; ic++) {
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=4
                     acc += (acc_t)in_pix[ic] * (acc_t)conv5_w[oc * CONV5_IN_C + ic];
                 }
                 data_t val = q_norm9(acc, conv5_b[oc]);
@@ -713,7 +713,7 @@ static void fc_classify_final(data_t sm4[SM4_SIZE], int* class_out)
 #pragma HLS PIPELINE
         acc_t acc = 0;
         for (int ic = 0; ic < FC_IN; ic++) {
-#pragma HLS UNROLL factor=32    /* reduced from 256 -> fewer DSPs, Sec 7.4.3.2 */
+#pragma HLS UNROLL factor=8    /* reduced from 256->32->8 -- scheduler memory ceiling on this machine */
             /* Apply /49 scale on weight to compensate avgpool scale change */
             data_t w_scaled = fc_w[oc * FC_IN + ic] / 49;
             acc += (acc_t)w_scaled * (acc_t)sm4[ic];
