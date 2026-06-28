@@ -752,10 +752,10 @@ Eight RTL optimizations were applied over the baseline 15-bit uniform datapath t
 
 | Metric            | Value       |
 |-------------------|-------------|
-| Frame rate        | TBD fps     |
-| Inference latency | TBD ms      |
-| Power             | TBD W       |
-| Energy per frame  | TBD J/frame |
+| Frame rate        | 1,216 fps (pipeline period = 0.822 ms, bottleneck Group 3) |
+| Inference latency | 0.822 ms/frame (first-frame latency: 2.253 ms) |
+| Power             | 6.426 W (Vivado post-P&R estimate, default toggle rates) |
+| Energy per frame  | 0.00529 J/frame (6.426 W ÷ 1,216 fps) |
 
 ### RTL vs HLS Comparison
 
@@ -763,12 +763,12 @@ Eight RTL optimizations were applied over the baseline 15-bit uniform datapath t
 |----------------------------|--------------------------|------------------------|------------------------|------------------------|
 | Target clock               | 100 MHz                  | 100 MHz                | 100 MHz                | 143 MHz                |
 | Clock achieved             | 100 MHz (WNS +0.125 ns)  | ~141 MHz (est.)        | ~137 MHz (est.)        | ~196 MHz (est.)        |
-| Latency (cycles)           | TBD (post-P&R)           | 150,443,669            | 22,131,250             | 21,815,375             |
-| Latency (abs.)             | TBD                      | 1.504 s/frame          | 0.221 s/frame          | 0.153 s/frame          |
-| Frame rate                 | TBD                      | ~0.7 fps               | ~4.5 fps               | ~6.5 fps               |
+| Latency (cycles)           | 82,200 (pipeline period) | 150,443,669            | 22,131,250             | 21,815,375             |
+| Latency (abs.)             | 0.822 ms/frame           | 1.504 s/frame          | 0.221 s/frame          | 0.153 s/frame          |
+| Frame rate                 | 1,216 fps                | ~0.7 fps               | ~4.5 fps               | ~6.5 fps               |
 | DSP (post-impl / est.)     | 1,550 / 1,968 (79%)      | —                      | 5,711 est. (290%)      | 6,636 est. (337%)      |
 | BRAM (post-impl / est.)    | 550.5 tiles / 984 (56%)  | —                      | 5,218 est. (265%)      | 5,075 est. (257%)      |
-| Power                      | TBD                      | TBD                    | TBD                    | TBD                    |
-| Energy / frame             | TBD                      | TBD                    | TBD                    | TBD                    |
+| Power                      | 6.426 W (Vivado est.)    | TBD                    | TBD                    | TBD                    |
+| Energy / frame             | 0.00529 J/frame          | TBD                    | TBD                    | TBD                    |
 
 *HLS resource estimates are pre-implementation (HLS C-synthesis stage) and over-report due to missing Vivado resource sharing.*
