@@ -376,9 +376,13 @@ shufflenet_v2_fpga/
 │       ├── part2_synth_g3_ooc.tcl         G3 OOC synthesis  → dcp/group3_top.dcp
 │       └── part3_synth_and_impl.tcl       Project synth + fill DCPs + P&R + bitstream
 │
-└── sw/                                    PS-side Linux software
-    ├── shufflenet_test.c                  Test app: load image → AXI → poll → result
-    └── gen_test_image.py                  Converts JPEG/PNG → 224×224×3 raw binary
+└── bare_metal_test/                       PS-side bare-metal test (Vitis Classic)
+    ├── shufflenet_test_baremetal.c        Test app: load image → AXI → poll → result
+    ├── gen_test_image_baremetal.py        Converts JPEG/PNG → 224×224×3 raw binary
+    ├── hw_config.h                        Hardware address map (AXI base, CSR, DDR buffer)
+    ├── platform.c / platform.h            BSP init/cleanup (cache enable/disable)
+    ├── load_image.tcl                     XSCT script: loads image.bin into DDR over JTAG
+    └── explanation.md                     Full walkthrough of the bare-metal test flow
 ```
 
 ---
@@ -403,11 +407,10 @@ pip install numpy torch torchvision Pillow
 
 ### Board Software (PS-side)
 
-GCC is required on the ZU19EG Linux image to compile the test application:
-
-```bash
-gcc -O2 -o shufflenet_test sw/shufflenet_test.c
-```
+The PS-side test runs bare-metal (no Linux) via Vitis Classic 2024.2. Import
+`vivado/shufflenet.xsa` as a platform (domain `psu_cortexa53_0`, standalone),
+build an application project from `bare_metal_test/`, and run it on hardware.
+Full step-by-step instructions: `bare_metal_test/explanation.md`.
 
 ---
 
@@ -565,25 +568,32 @@ Base address: `0xA000_0000`
 
 ### PS Test Application
 
-On the host machine, convert an image to the raw binary format expected by the test application:
+On the host machine, convert an image to the format expected by the test application:
 
 ```bash
-python sw/gen_test_image.py --image photo.jpg --out image.bin
+python bare_metal_test/gen_test_image_baremetal.py --image photo.jpg --out image
 ```
 
-Transfer `image.bin` to the board (SCP, USB, or SD card), then compile and run on the ZU19EG:
+Build and run `bare_metal_test/shufflenet_test_baremetal.c` as a Vitis Classic
+application project targeting `psu_cortexa53_0` (standalone). When the UART
+prompt asks for the image, load it into DDR over JTAG from the XSCT console:
 
-```bash
-gcc -O2 -o shufflenet_test sw/shufflenet_test.c
-./shufflenet_test image.bin
+```tcl
+connect
+targets -set -filter {name =~ "Cortex-A53 #0"}
+source bare_metal_test/load_image.tcl
 ```
 
-Expected output:
+Press ENTER in the UART terminal to trigger inference. Expected output:
 
 ```
-Class index : 281
-Inference   : <time> ms
+=== RESULT ===
+  class_idx      : 281
+  inference time : <time> us
+==============
 ```
+
+Full walkthrough: `bare_metal_test/explanation.md`.
 
 ---
 
