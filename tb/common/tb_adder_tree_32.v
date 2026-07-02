@@ -64,6 +64,7 @@ module tb_adder_tree_32;
             if (have_arg) fd = $fopen(path_arg, "r");
             else fd = $fopen("tb/common/vectors/adder_tree_32_vectors.hex", "r");
             if (fd == 0) fd = $fopen("../tb/common/vectors/adder_tree_32_vectors.hex","r");
+            if (fd == 0) fd = $fopen("../../../../../../tb/common/vectors/adder_tree_32_vectors.hex","r");
             if (fd == 0) fd = $fopen("./adder_tree_32_vectors.hex", "r");
         end
         if (fd == 0) begin $display("ERROR: cannot open vector file"); $finish; end

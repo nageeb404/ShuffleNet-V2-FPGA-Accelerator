@@ -91,6 +91,8 @@ module tb_fifo_3x3;
             if (fd == 0)
                 fd = $fopen("../tb/common/vectors/fifo_3x3_vectors.hex", "r");
             if (fd == 0)
+                fd = $fopen("../../../../../../tb/common/vectors/fifo_3x3_vectors.hex", "r");
+            if (fd == 0)
                 fd = $fopen("./fifo_3x3_vectors.hex", "r");
         end
         if (fd == 0) begin

@@ -99,6 +99,8 @@ module tb_quantizer;
             if (fd == 0)
                 fd = $fopen("../tb/common/vectors/quantizer_vectors.hex", "r");
             if (fd == 0)
+                fd = $fopen("../../../../../../tb/common/vectors/quantizer_vectors.hex", "r");
+            if (fd == 0)
                 fd = $fopen("./quantizer_vectors.hex", "r");
         end
         if (fd == 0) begin

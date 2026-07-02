@@ -102,6 +102,8 @@ module tb_Adder3;
             if (fd == 0)
                 fd = $fopen("../tb/common/vectors/adder3_vectors.hex", "r");
             if (fd == 0)
+                fd = $fopen("../../../../../../tb/common/vectors/adder3_vectors.hex", "r");
+            if (fd == 0)
                 fd = $fopen("./adder3_vectors.hex", "r");
         end
         if (fd == 0) begin

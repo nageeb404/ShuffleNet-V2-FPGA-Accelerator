@@ -131,6 +131,7 @@ module tb_dw_conv3x3_ctrl;
             if (have_arg) fd = $fopen(path_arg, "r");
             else fd = $fopen("tb/group2/vectors/dw_conv3x3_ctrl_vectors.hex", "r");
             if (fd == 0) fd = $fopen("../tb/group2/vectors/dw_conv3x3_ctrl_vectors.hex", "r");
+            if (fd == 0) fd = $fopen("../../../../../../tb/group2/vectors/dw_conv3x3_ctrl_vectors.hex", "r");
             if (fd == 0) fd = $fopen("./dw_conv3x3_ctrl_vectors.hex", "r");
         end
         if (fd == 0) begin $display("ERROR: cannot open vector file"); $finish; end

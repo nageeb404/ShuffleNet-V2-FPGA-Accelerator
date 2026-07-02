@@ -76,6 +76,8 @@ module tb_bias_rom_3x3;
         if (fd == 0)
             fd = $fopen("../tb/common/vectors/bias_rom_3x3_tb_vectors.hex", "r");
         if (fd == 0)
+            fd = $fopen("../../../../../../tb/group1/vectors/bias_rom_3x3_tb_vectors.hex", "r");
+        if (fd == 0)
             fd = $fopen("./bias_rom_3x3_tb_vectors.hex", "r");
         if (fd == 0) begin
             $display("ERROR: cannot open bias_rom_3x3_tb_vectors.hex");

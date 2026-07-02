@@ -98,6 +98,8 @@ module tb_group1_ctrl;
         if (fd == 0)
             fd = $fopen("../tb/common/vectors/group1_ctrl_tb_vectors.hex", "r");
         if (fd == 0)
+            fd = $fopen("../../../../../../tb/group1/vectors/group1_ctrl_tb_vectors.hex", "r");
+        if (fd == 0)
             fd = $fopen("./group1_ctrl_tb_vectors.hex", "r");
         if (fd == 0) begin
             $display("ERROR: cannot open group1_ctrl_tb_vectors.hex");

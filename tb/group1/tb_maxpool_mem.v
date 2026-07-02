@@ -116,6 +116,8 @@ module tb_maxpool_mem;
         if (fd == 0)
             fd = $fopen("../tb/common/vectors/maxpool_mem_tb_vectors.hex", "r");
         if (fd == 0)
+            fd = $fopen("../../../../../../tb/group1/vectors/maxpool_mem_tb_vectors.hex", "r");
+        if (fd == 0)
             fd = $fopen("./maxpool_mem_tb_vectors.hex", "r");
         if (fd == 0) begin
             $display("ERROR: cannot open maxpool_mem_tb_vectors.hex");

@@ -142,6 +142,8 @@ module tb_fifo_ctrl;
         if (fd == 0)
             fd = $fopen("../tb/common/vectors/fifo_ctrl_vectors.hex", "r");
         if (fd == 0)
+            fd = $fopen("../../../../../../tb/common/vectors/fifo_ctrl_vectors.hex", "r");
+        if (fd == 0)
             fd = $fopen("./fifo_ctrl_vectors.hex", "r");
         if (fd == 0) begin
             $display("ERROR: cannot open fifo_ctrl_vectors.hex");

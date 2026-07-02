@@ -84,6 +84,8 @@ module tb_adder_tree_9;
             if (fd == 0)
                 fd = $fopen("../tb/common/vectors/adder_tree_9_vectors.hex", "r");
             if (fd == 0)
+                fd = $fopen("../../../../../../tb/common/vectors/adder_tree_9_vectors.hex", "r");
+            if (fd == 0)
                 fd = $fopen("./adder_tree_9_vectors.hex", "r");
         end
         if (fd == 0) begin

@@ -66,6 +66,7 @@ module tb_fifo_pool;
             if (have_arg) fd = $fopen(path_arg, "r");
             else          fd = $fopen("tb/common/vectors/fifo_pool_vectors.hex", "r");
             if (fd == 0)  fd = $fopen("../tb/common/vectors/fifo_pool_vectors.hex", "r");
+            if (fd == 0)  fd = $fopen("../../../../../../tb/group1/vectors/fifo_pool_vectors.hex", "r");
             if (fd == 0)  fd = $fopen("./fifo_pool_vectors.hex", "r");
         end
         if (fd == 0) begin

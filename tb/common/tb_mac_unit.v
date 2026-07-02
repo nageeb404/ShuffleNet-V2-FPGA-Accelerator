@@ -101,6 +101,8 @@ module tb_mac_unit;
             if (fd == 0)
                 fd = $fopen("../tb/common/vectors/mac_unit_vectors.hex", "r");
             if (fd == 0)
+                fd = $fopen("../../../../../../tb/common/vectors/mac_unit_vectors.hex", "r");
+            if (fd == 0)
                 fd = $fopen("./mac_unit_vectors.hex", "r");
         end
         if (fd == 0) begin
