@@ -9,9 +9,5 @@
 # NOT top-level ports -- any get_ports constraint on them will fail and is omitted.
 # =============================================================================
 
-# MMCM output: explicitly named so timing reports are readable.
-# Vivado infers the master clock automatically from CLKIN1.
-create_generated_clock -name clk_100m \
-    -source [get_pins -hierarchical -filter {NAME =~ */u_mmcm/CLKIN1}] \
-    -multiply_by 10 -divide_by 10 \
-    [get_pins -hierarchical -filter {NAME =~ */u_mmcm/CLKOUT0}]
+# MMCM output clock: auto-derived by Vivado BD from the PS pl_clk0 input.
+# No create_generated_clock needed here -- the BD XDC already defines it.

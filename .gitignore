@@ -4,6 +4,7 @@ vivado/prj_zu19eg/
 vivado/work/
 vivado/reports/
 vivado/dcp/
+vivado/*_routed.dcp
 *.jou
 *.log
 .Xil/
@@ -11,6 +12,11 @@ vivado/dcp/
 # Vivado runtime artifacts
 clockInfo.txt
 *.dmp
+vivado/vivado/
+vivado_pid*.str
+
+# Vitis IDE workspace (local build/metadata, not source)
+bare_metal_test/Vitis/
 
 # Allow synthesis scripts and implementation reports
 !vivado/work/part*.tcl
