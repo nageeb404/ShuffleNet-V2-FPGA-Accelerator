@@ -155,30 +155,59 @@ set sn [create_bd_cell -type module \
 # sub-process. This avoids two concurrent synthesis processes competing for RAM.
 set_property SYNTH_CHECKPOINT_MODE None [get_bd_cells shufflenet_board_top_0]
 
+# ---- Processor System Reset (synchronized reset for the 100 MHz PL domain) ----
+set rst [create_bd_cell -type ip \
+ -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_system_100M]
+
+# ---- System ILA (debug: watch both AXI4-Lite interfaces on hardware) ----
+# Slot 0: smartconnect -> shufflenet_board_top (accelerator's own AXI slave port)
+# Slot 1: PS M_AXI_HPM0_FPD -> smartconnect (PS master side)
+set ila [create_bd_cell -type ip \
+ -vlnv xilinx.com:ip:system_ila:1.1 system_ila_0]
+set_property -dict [list \
+ CONFIG.C_MON_TYPE {INTERFACE} \
+ CONFIG.C_NUM_MONITOR_SLOTS {2} \
+ CONFIG.C_DATA_DEPTH {2048} \
+ CONFIG.C_EN_STRG_QUAL {1} \
+ CONFIG.C_SLOT_0_INTF_TYPE {xilinx.com:interface:aximm_rtl:1.0} \
+ CONFIG.C_SLOT_1_INTF_TYPE {xilinx.com:interface:aximm_rtl:1.0} \
+] $ila
+
 # ---- Connections ----
-# Clock: PS pl_clk0 -> smartconnect, shufflenet, and PS HPM0 FPD clock input.
+# Clock: PS pl_clk0 -> smartconnect, shufflenet, PS HPM0 FPD clock input,
+# the reset block's sync clock, and the ILA's sample clock.
 # maxihpm0_fpd_aclk must be driven (required by PS IP for the AXI master port).
 connect_bd_net \
  [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] \
  [get_bd_pins smartconnect_0/aclk] \
  [get_bd_pins shufflenet_board_top_0/s_axi_aclk] \
- [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk]
+ [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] \
+ [get_bd_pins rst_system_100M/slowest_sync_clk] \
+ [get_bd_pins system_ila_0/clk]
 
-# Reset: PS pl_resetn0 -> smartconnect, shufflenet
+# Reset: PS pl_resetn0 -> rst_system_100M -> smartconnect, shufflenet, ILA.
+# (Routed through proc_sys_reset instead of driving peripherals directly, for
+# a properly synchronized reset release.)
 connect_bd_net \
  [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] \
- [get_bd_pins smartconnect_0/aresetn]
+ [get_bd_pins rst_system_100M/ext_reset_in]
 connect_bd_net \
- [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] \
- [get_bd_pins shufflenet_board_top_0/s_axi_aresetn]
+ [get_bd_pins rst_system_100M/peripheral_aresetn] \
+ [get_bd_pins smartconnect_0/aresetn] \
+ [get_bd_pins shufflenet_board_top_0/s_axi_aresetn] \
+ [get_bd_pins system_ila_0/resetn]
 
-# AXI: PS master -> smartconnect -> shufflenet slave
+# AXI: PS master -> smartconnect -> shufflenet slave.
+# Both interfaces are also tapped by the ILA as monitor-only connections
+# (mode=Monitor on the ILA's SLOT_0_AXI / SLOT_1_AXI ports).
 connect_bd_intf_net \
  [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] \
- [get_bd_intf_pins smartconnect_0/S00_AXI]
+ [get_bd_intf_pins smartconnect_0/S00_AXI] \
+ [get_bd_intf_pins system_ila_0/SLOT_1_AXI]
 connect_bd_intf_net \
  [get_bd_intf_pins smartconnect_0/M00_AXI] \
- [get_bd_intf_pins shufflenet_board_top_0/S_AXI]
+ [get_bd_intf_pins shufflenet_board_top_0/S_AXI] \
+ [get_bd_intf_pins system_ila_0/SLOT_0_AXI]
 
 # ---- Address assignment ----
 # Use create_bd_addr_seg directly: auto-assign tries 4G which exceeds the
