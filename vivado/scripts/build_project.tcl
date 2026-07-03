@@ -29,6 +29,27 @@ puts "\[INFO\] Project dir : $proj_dir"
 puts "\[INFO\] Part        : $part"
 puts "\[INFO\] Board       : $board"
 
+# ---- Retry helper ----
+# IP customization/GUI files (both project-generated module-reference metadata
+# and Vivado's own installed IP catalog .tcl files) are occasionally reported
+# missing on first read on this machine (antivirus real-time scanning racing
+# ahead of/behind the actual file access). Retrying a few seconds later clears
+# it every time observed so far, so any step that touches IP customization
+# data goes through this wrapper instead of failing the whole build.
+proc with_retry {desc body_script {max_attempts 4} {delay_ms 4000}} {
+ for {set attempt 1} {$attempt <= $max_attempts} {incr attempt} {
+  if {[catch {uplevel 1 $body_script} err]} {
+   puts "WARNING: $desc attempt $attempt failed: $err"
+   if {$attempt == $max_attempts} {
+    error "$desc failed after $max_attempts attempts: $err"
+   }
+   after $delay_ms
+  } else {
+   return
+  }
+ }
+}
+
 # ---- Clean previous project ----
 catch {close_sim -quiet}
 catch {close_project -quiet}
@@ -117,17 +138,23 @@ create_bd_design "system"
 current_bd_design "system"
 
 # ---- Zynq MPSoC PS ----
-set ps [create_bd_cell -type ip \
- -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0]
+with_retry "create zynq_ultra_ps_e_0" {
+ catch {remove_bd_objs [get_bd_cells -quiet zynq_ultra_ps_e_0]}
+ set ::ps [create_bd_cell -type ip \
+  -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0]
+}
+set ps $::ps
 
 # Step 1: Apply iWave board preset first.
 # This sets DDR4 timing, MIO (UART/eMMC/Ethernet/I2C), fixed-IO, and
 # connects DDR/FIXED_IO ports automatically. Must come BEFORE our property
 # overrides because apply_bd_automation resets properties to preset defaults.
-apply_bd_automation \
- -rule xilinx.com:bd_rule:zynq_ultra_ps_e \
- -config {apply_board_preset 1} \
- [get_bd_cells zynq_ultra_ps_e_0]
+with_retry "apply_bd_automation zynq_ultra_ps_e" {
+ apply_bd_automation \
+  -rule xilinx.com:bd_rule:zynq_ultra_ps_e \
+  -config {apply_board_preset 1} \
+  [get_bd_cells zynq_ultra_ps_e_0]
+}
 
 # Step 2: Override / add our specific settings on top of the board preset.
 # Enable AXI master HPM0 FPD for pixel writes and CSR access from PS,
@@ -141,29 +168,45 @@ set_property -dict [list \
 ] $ps
 
 # ---- AXI SmartConnect (PS master -> our slave) ----
-set sc [create_bd_cell -type ip \
- -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0]
+with_retry "create smartconnect_0" {
+ catch {remove_bd_objs [get_bd_cells -quiet smartconnect_0]}
+ set ::sc [create_bd_cell -type ip \
+  -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0]
+}
+set sc $::sc
 set_property CONFIG.NUM_SI {1} $sc
 set_property CONFIG.NUM_MI {1} $sc
 
 # ---- shufflenet_board_top (Module Reference) ----
 # Vivado reads shufflenet_board_top.v from the sources and creates an IP block.
 # All s_axi_* ports are auto-mapped to an AXI4-Lite slave interface.
-set sn [create_bd_cell -type module \
- -reference shufflenet_board_top shufflenet_board_top_0]
+with_retry "create shufflenet_board_top_0" {
+ catch {remove_bd_objs [get_bd_cells -quiet shufflenet_board_top_0]}
+ set ::sn [create_bd_cell -type module \
+  -reference shufflenet_board_top shufflenet_board_top_0]
+}
+set sn $::sn
 # Synthesize our RTL globally (with synth_1) instead of as a separate OOC
 # sub-process. This avoids two concurrent synthesis processes competing for RAM.
 set_property SYNTH_CHECKPOINT_MODE None [get_bd_cells shufflenet_board_top_0]
 
 # ---- Processor System Reset (synchronized reset for the 100 MHz PL domain) ----
-set rst [create_bd_cell -type ip \
- -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_system_100M]
+with_retry "create rst_system_100M" {
+ catch {remove_bd_objs [get_bd_cells -quiet rst_system_100M]}
+ set ::rst [create_bd_cell -type ip \
+  -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_system_100M]
+}
+set rst $::rst
 
 # ---- System ILA (debug: watch both AXI4-Lite interfaces on hardware) ----
 # Slot 0: smartconnect -> shufflenet_board_top (accelerator's own AXI slave port)
 # Slot 1: PS M_AXI_HPM0_FPD -> smartconnect (PS master side)
-set ila [create_bd_cell -type ip \
- -vlnv xilinx.com:ip:system_ila:1.1 system_ila_0]
+with_retry "create system_ila_0" {
+ catch {remove_bd_objs [get_bd_cells -quiet system_ila_0]}
+ set ::ila [create_bd_cell -type ip \
+  -vlnv xilinx.com:ip:system_ila:1.1 system_ila_0]
+}
+set ila $::ila
 set_property -dict [list \
  CONFIG.C_MON_TYPE {INTERFACE} \
  CONFIG.C_NUM_MONITOR_SLOTS {2} \
@@ -199,14 +242,22 @@ connect_bd_net \
 
 # AXI: PS master -> smartconnect -> shufflenet slave.
 # Both interfaces are also tapped by the ILA as monitor-only connections
-# (mode=Monitor on the ILA's SLOT_0_AXI / SLOT_1_AXI ports).
+# (mode=Monitor on the ILA's SLOT_0_AXI / SLOT_1_AXI ports). Vivado cannot
+# resolve a 3-way connect_bd_intf_net when one pin is Monitor-mode, so the
+# real master/slave pair is connected first, then the ILA tap is added onto
+# the existing net in a second call.
 connect_bd_intf_net \
  [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] \
+ [get_bd_intf_pins smartconnect_0/S00_AXI]
+connect_bd_intf_net \
  [get_bd_intf_pins smartconnect_0/S00_AXI] \
  [get_bd_intf_pins system_ila_0/SLOT_1_AXI]
+
 connect_bd_intf_net \
  [get_bd_intf_pins smartconnect_0/M00_AXI] \
- [get_bd_intf_pins shufflenet_board_top_0/S_AXI] \
+ [get_bd_intf_pins shufflenet_board_top_0/S_AXI]
+connect_bd_intf_net \
+ [get_bd_intf_pins smartconnect_0/M00_AXI] \
  [get_bd_intf_pins system_ila_0/SLOT_0_AXI]
 
 # ---- Address assignment ----
@@ -220,12 +271,31 @@ create_bd_addr_seg \
 puts "\[INFO\] Address: shufflenet at 0xA0000000, range 32M"
 
 # ---- Validate and generate wrapper ----
+# validate_bd_design triggers internal IP elaboration (e.g. smartconnect's
+# sub-cells) which reads more IP-catalog customization files, so it goes
+# through the same retry wrapper as the explicit create_bd_cell calls above.
 puts "\[INFO\] Validating block design..."
-validate_bd_design
+with_retry "validate_bd_design" { validate_bd_design }
 save_bd_design
 
 puts "\[INFO\] Generating HDL wrapper..."
-make_wrapper -files [get_files system.bd] -top -force
+with_retry "make_wrapper" {
+ make_wrapper -files [get_files system.bd] -top -force
+}
+
+# ---- Generate IP output products ----
+# Without this, every cell in the block design (Zynq PS, SmartConnect, System
+# ILA, proc_sys_reset, and the shufflenet_board_top module reference) has no
+# synthesizable netlist available and synth_design silently drops in an empty
+# black box for each one instead of erroring -- the run reports "0 errors" but
+# produces a near-empty checkpoint. This step must run before synth_1.
+puts "\[INFO\] Generating IP output products..."
+with_retry "generate_target" {
+ generate_target all [get_files system.bd]
+}
+with_retry "export_ip_user_files" {
+ export_ip_user_files -of_objects [get_files system.bd] -no_script -sync -force -quiet
+}
 set wrapper [glob -nocomplain \
  [file join $proj_dir $proj_name.gen sources_1 bd system hdl system_wrapper.v]]
 if {[llength $wrapper] == 0} {
